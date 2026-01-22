@@ -1,0 +1,64 @@
+server:
+    port: 9090
+    servlet:
+        context-path: /api
+
+spring:
+    #    数据库连接配置
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://127.0.0.1:3306/sealflow?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+        username: root
+        password: root
+        type: com.alibaba.druid.pool.DruidDataSource
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+
+    #    邮件服务配置
+    mail:
+        host: smtp.163.com #邮件服务器地址
+        protocol: smtp #协议
+        username: weighjudge@163.com
+        password: GRRfAAguGnfANwLL
+        default-encoding: utf-8 #邮件内容的编码
+        properties:
+            mail.smtp.auth: true
+            mail.smtp.starttls.enable: true
+            mail.smtp.starttls.ssl.enabled: true
+    data:
+        redis: # Redis连接配置
+            host: 127.0.0.1  # Redis主机地址
+            port: 6379  # Redis端口号
+            password: redis  # 访问Redis所需密码
+            database: 0  # 使用的数据库编号
+
+springdoc:
+    swagger-ui:
+        path: /swagger-ui.html
+        tags-sorter: alpha
+        operations-sorter: alpha
+    api-docs:
+        path: /v3/api-docs
+    group-configs:
+        -   group: 'dev'
+            paths-to-match: '/**'
+            #生成文档所需的扫包路径，一般为启动类目录
+            packages-to-scan: com.sealflow
+
+
+#knife4j配置
+knife4j:
+    #是否启用增强设置
+    enable: true
+    #开启生产环境屏蔽
+    production: false
+    setting:
+        language: zh_cn
+        enable-version: true
+        enable-swagger-models: true
+
+#logging:
+#    level:
+#        org.springframework.security: DEBUG # 将日志级别从 DEBUG 调整为 INFO
