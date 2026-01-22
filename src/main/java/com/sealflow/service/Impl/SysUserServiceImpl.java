@@ -157,8 +157,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		qw.eq(SysUser::getDeleted, 0);
 		qw.like(StringUtils.isNotBlank(queryParams.getUsername()), SysUser::getUsername, queryParams.getUsername());
 		qw.like(StringUtils.isNotBlank(queryParams.getRealName()), SysUser::getRealName, queryParams.getRealName());
-		qw.like(StringUtils.isNotBlank(queryParams.getEmail()), SysUser::getEmail, queryParams.getEmail());
-		qw.like(StringUtils.isNotBlank(queryParams.getPhone()), SysUser::getPhone, queryParams.getPhone());
 		qw.eq(queryParams.getGender() != null, SysUser::getGender, queryParams.getGender());
 		qw.eq(queryParams.getStatus() != null, SysUser::getStatus, queryParams.getStatus());
 		qw.orderByDesc(SysUser::getCreateTime);
