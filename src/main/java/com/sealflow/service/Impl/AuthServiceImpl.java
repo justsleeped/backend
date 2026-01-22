@@ -50,7 +50,7 @@ public class AuthServiceImpl implements IAuthService {
 
 		// 生成JWT token
 		Map<String, Object> claims = new HashMap<>();
-		claims.put("userId", user.getId());
+		claims.put("userId", user.getId().toString());
 		claims.put("username", user.getUsername());
 		String token = jwtUtil.createToken(claims, tokenProperties.getExpiration() / 1000);
 

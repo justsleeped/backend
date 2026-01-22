@@ -18,7 +18,7 @@ import jakarta.validation.Valid;
  */
 @Tag(name = "认证管理")
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

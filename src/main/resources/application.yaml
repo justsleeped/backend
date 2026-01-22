@@ -34,6 +34,16 @@ spring:
             password: redis  # 访问Redis所需密码
             database: 0  # 使用的数据库编号
 
+    # Flowable工作流引擎配置
+    flowable:
+        database-schema-update: true
+        deployment-mode: single-engine
+        db-identity-used: false
+        history-level: audit
+        process-definition-location-prefix: classpath*:/processes/
+        check-process-definitions: false
+        async-executor-activate: false
+
 springdoc:
     swagger-ui:
         path: /swagger-ui.html

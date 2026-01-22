@@ -53,9 +53,11 @@ public final class JwtUtil {
 	/**
 	 * 获取用户id
 	 */
-	public String getUserId(String token) {
-		return (String) parsePayload(token).get("userId");
-	}
+public String getUserId(String token) {
+    Map<String, Object> claims = parsePayload(token);
+    Object userIdObj = claims.get("userId"); // 获取原始对象
+    return userIdObj != null ? userIdObj.toString() : null; // 安全转换
+}
 
 	/**
 	 * 验证 token
