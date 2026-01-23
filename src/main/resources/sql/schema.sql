@@ -80,35 +80,17 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     deleted       TINYINT  DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
 ) COMMENT ='角色权限关联表';
 
--- 印章分类表
-CREATE TABLE IF NOT EXISTS seal_category
-(
-    id          BIGINT PRIMARY KEY COMMENT '主键ID',
-    name        VARCHAR(100) NOT NULL COMMENT '分类名称',
-    description VARCHAR(500) COMMENT '分类描述',
-    parent_id   BIGINT   DEFAULT 0 COMMENT '父级分类ID（0表示顶级分类）',
-    sort        INT      DEFAULT 0 COMMENT '排序值',
-    status      TINYINT  DEFAULT 1 COMMENT '状态（0禁用，1启用）',
-    create_by   BIGINT   DEFAULT 0,
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_by   BIGINT   DEFAULT 0,
-    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted     TINYINT  DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
-) COMMENT ='印章分类表';
-
 -- 印章信息表
 CREATE TABLE IF NOT EXISTS seal_info
 (
     id               BIGINT PRIMARY KEY COMMENT '主键ID',
     code             VARCHAR(64)  NOT NULL UNIQUE COMMENT '印章编码',
     name             VARCHAR(100) NOT NULL COMMENT '印章名称',
-    category_id      BIGINT       NOT NULL COMMENT '所属分类ID',
+    category         VARCHAR(100)       NOT NULL COMMENT '所属分类',
     description      TEXT COMMENT '印章描述',
     image_url        VARCHAR(500) COMMENT '印章图片URL',
     storage_location VARCHAR(200) COMMENT '存放位置',
-    custody_user_id  BIGINT       NOT NULL COMMENT '保管人ID',
-    status           TINYINT  DEFAULT 1 COMMENT '状态（0-停用，1-启用，2-损坏，3-丢失）',
-    is_archived      TINYINT  DEFAULT 0 COMMENT '是否归档（0未归档，1已归档）',
+    status           TINYINT  DEFAULT 1 COMMENT '状态（0-停用，1-启用）',
     create_by        BIGINT   DEFAULT 0,
     create_time      DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_by        BIGINT   DEFAULT 0,

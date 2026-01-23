@@ -22,6 +22,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 党章审批记录服务实现类
+ * 
+ * 主要功能：
+ * 1. 保存审批记录
+ * 2. 根据申请ID查询审批记录列表
+ * 3. 根据流程实例ID查询审批记录列表
+ * 4. 分页查询审批记录
+ * 5. 根据任务ID查询审批记录
+ * 6. 丰富审批记录VO信息（设置审批阶段名称、审批结果名称）
+ */
 @Service
 @RequiredArgsConstructor
 public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRecordMapper, PartyApprovalRecord> implements IPartyApprovalRecordService {
@@ -31,6 +42,27 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
     private final TaskService taskService;
     private final HistoryService historyService;
 
+    /**
+     * 保存审批记录
+     * 
+     * 功能说明：
+     * 1. 查询历史任务实例，获取任务开始时间
+     * 2. 设置任务结束时间为当前时间
+     * 3. 保存审批记录到数据库
+     * 
+     * @param applyId 申请ID
+     * @param processInstanceId 流程实例ID
+     * @param taskId 任务ID
+     * @param taskName 任务名称
+     * @param taskKey 任务Key
+     * @param approvalStage 审批阶段
+     * @param approverId 审批人ID
+     * @param approverName 审批人姓名
+     * @param approverRoleCode 审批角色编码
+     * @param approverRoleName 审批角色名称
+     * @param approveResult 审批结果（1-同意，2-拒绝）
+     * @param approveComment 审批意见
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveApprovalRecord(Long applyId, String processInstanceId, String taskId, String taskName, String taskKey, Integer approvalStage, Long approverId, String approverName, String approverRoleCode, String approverRoleName, Integer approveResult, String approveComment) {
@@ -62,6 +94,17 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
         this.save(record);
     }
 
+    /**
+     * 根据申请ID查询审批记录列表
+     * 
+     * 功能说明：
+     * 1. 根据申请ID查询所有审批记录
+     * 2. 按审批阶段升序排序
+     * 3. 丰富VO信息（设置审批阶段名称、审批结果名称）
+     * 
+     * @param applyId 申请ID
+     * @return 审批记录VO列表
+     */
     @Override
     public List<PartyApprovalRecordVO> getApprovalRecordsByApplyId(Long applyId) {
         List<PartyApprovalRecord> records = this.list(new LambdaQueryWrapper<PartyApprovalRecord>()
@@ -72,6 +115,17 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 根据流程实例ID查询审批记录列表
+     * 
+     * 功能说明：
+     * 1. 根据流程实例ID查询所有审批记录
+     * 2. 按审批阶段升序排序
+     * 3. 丰富VO信息（设置审批阶段名称、审批结果名称）
+     * 
+     * @param processInstanceId 流程实例ID
+     * @return 审批记录VO列表
+     */
     @Override
     public List<PartyApprovalRecordVO> getApprovalRecordsByProcessInstanceId(String processInstanceId) {
         List<PartyApprovalRecord> records = this.list(new LambdaQueryWrapper<PartyApprovalRecord>()
@@ -82,6 +136,17 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 分页查询审批记录
+     * 
+     * 功能说明：
+     * 1. 支持根据流程实例ID过滤
+     * 2. 按审批阶段升序排序
+     * 3. 丰富VO信息（设置审批阶段名称、审批结果名称）
+     * 
+     * @param queryParams 查询条件
+     * @return 分页结果
+     */
     @Override
     public IPage<PartyApprovalRecordVO> pageApprovalRecords(PartyApplyPageQuery queryParams) {
         Page<PartyApprovalRecord> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
@@ -99,6 +164,12 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
         return resultPage;
     }
 
+    /**
+     * 根据任务ID查询审批记录
+     * 
+     * @param taskId 任务ID
+     * @return 审批记录VO
+     */
     @Override
     public PartyApprovalRecordVO getApprovalRecordByTaskId(String taskId) {
         PartyApprovalRecord record = this.getOne(new LambdaQueryWrapper<PartyApprovalRecord>()
@@ -109,6 +180,15 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
         return enrichApprovalRecordVO(record);
     }
 
+    /**
+     * 丰富审批记录VO信息
+     * 
+     * 功能说明：
+     * 设置审批阶段名称和审批结果名称
+     * 
+     * @param record 审批记录实体
+     * @return 审批记录VO
+     */
     private PartyApprovalRecordVO enrichApprovalRecordVO(PartyApprovalRecord record) {
         PartyApprovalRecordVO vo = converter.approvalRecordToVo(record);
         vo.setApprovalStageName(getApprovalStageName(record.getApprovalStage()));
@@ -116,12 +196,27 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
         return vo;
     }
 
+    /**
+     * 丰富审批记录VO信息（重载方法）
+     * 
+     * 功能说明：
+     * 设置审批阶段名称和审批结果名称
+     * 
+     * @param vo 审批记录VO
+     * @return 审批记录VO
+     */
     private PartyApprovalRecordVO enrichApprovalRecordVO2(PartyApprovalRecordVO vo) {
         vo.setApprovalStageName(getApprovalStageName(vo.getApprovalStage()));
         vo.setApproveResultName(getApproveResultName(vo.getApproveResult()));
         return vo;
     }
 
+    /**
+     * 根据审批阶段获取阶段名称
+     * 
+     * @param approvalStage 审批阶段
+     * @return 阶段名称
+     */
     private String getApprovalStageName(Integer approvalStage) {
         if (approvalStage == null) {
             return "";
@@ -140,6 +235,12 @@ public class PartyApprovalRecordServiceImpl extends ServiceImpl<PartyApprovalRec
         }
     }
 
+    /**
+     * 根据审批结果获取结果名称
+     * 
+     * @param approveResult 审批结果
+     * @return 结果名称
+     */
     private String getApproveResultName(Integer approveResult) {
         if (approveResult == null) {
             return "";

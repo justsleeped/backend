@@ -38,6 +38,16 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 党章申请服务实现类
+ * 
+ * 主要功能：
+ * 1. 党章申请的增删改查
+ * 2. 工作流流程启动和管理
+ * 3. 审批任务处理
+ * 4. 待办任务查询（支持角色候选组）
+ * 5. 已办任务查询
+ */
 @Service
 @RequiredArgsConstructor
 public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyApply> implements IPartyApplyService {
@@ -51,6 +61,19 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
     private final com.sealflow.service.ISysUserService sysUserService;
     private final ISysUserRoleService sysUserRoleService;
 
+    /**
+     * 保存党章申请
+     * 
+     * 功能说明：
+     * 1. 生成申请编号
+     * 2. 设置申请状态为待审批（0）
+     * 3. 设置申请人为当前登录用户
+     * 4. 保存申请记录
+     * 5. 自动启动工作流流程
+     * 
+     * @param formData 申请表单数据
+     * @return 申请ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long savePartyApply(PartyApplyForm formData) {
@@ -71,12 +94,20 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
 
         Assert.isTrue(this.save(entity), "添加失败");
 
-        // 保存后立即启动流程
         startProcess(entity.getId());
 
         return entity.getId();
     }
 
+    /**
+     * 更新党章申请
+     * 
+     * 功能说明：
+     * 只有状态为待审批（0）的申请才能修改
+     * 
+     * @param id 申请ID
+     * @param formData 申请表单数据
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updatePartyApply(Long id, PartyApplyForm formData) {
@@ -87,6 +118,14 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         Assert.isTrue(this.updateById(entity), "修改失败");
     }
 
+    /**
+     * 删除党章申请
+     * 
+     * 功能说明：
+     * 支持批量删除，采用逻辑删除方式
+     * 
+     * @param idStr 申请ID字符串，多个ID以逗号分隔
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deletePartyApply(String idStr) {
@@ -100,6 +139,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         Assert.isTrue(this.update(wrapper), "删除失败");
     }
 
+    /**
+     * 获取党章申请详情
+     * 
+     * @param id 申请ID
+     * @return 申请详情VO
+     */
     @Override
     public PartyApplyVO getPartyApplyVo(Long id) {
         PartyApply entity = getEntity(id);
@@ -108,6 +153,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return vo;
     }
 
+    /**
+     * 分页查询党章申请列表
+     * 
+     * @param queryParams 查询条件
+     * @return 分页结果
+     */
     @Override
     public IPage<PartyApplyVO> pagePartyApply(PartyApplyPageQuery queryParams) {
         Page<PartyApply> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
@@ -117,6 +168,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return resultPage;
     }
 
+    /**
+     * 列表查询党章申请
+     * 
+     * @param queryParams 查询条件
+     * @return 申请列表
+     */
     @Override
     public List<PartyApplyVO> listPartyApply(PartyApplyPageQuery queryParams) {
         List<PartyApplyVO> list = converter.entityToVo(this.list(getQueryWrapper(queryParams)));
@@ -124,6 +181,18 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return list;
     }
 
+    /**
+     * 启动工作流流程
+     * 
+     * 功能说明：
+     * 1. 验证申请状态，只有待审批（0）的申请才能启动流程
+     * 2. 设置流程变量（申请人ID、申请人姓名、申请ID）
+     * 3. 启动流程实例
+     * 4. 更新申请状态为审批中（1）
+     * 5. 更新当前任务信息
+     * 
+     * @param applyId 申请ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void startProcess(Long applyId) {
@@ -152,6 +221,25 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         Assert.isTrue(this.updateById(partyApply), "更新申请状态失败");
     }
 
+    /**
+     * 审批任务
+     * 
+     * 功能说明：
+     * 1. 验证任务是否存在
+     * 2. 验证申请是否存在
+     * 3. 判断审批阶段和审批角色
+     * 4. 设置流程变量（审批结果、拒绝原因）
+     * 5. 保存审批记录
+     * 6. 完成任务
+     * 7. 更新申请状态：
+     *    - 流程结束：设置为已通过（2）或已拒绝（3）
+     *    - 流程继续：更新当前任务信息
+     * 
+     * @param taskId 任务ID
+     * @param approveResult 审批结果（1-通过，2-拒绝）
+     * @param approveComment 审批意见
+     * @param approverId 审批人ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approveTask(String taskId, Integer approveResult, String approveComment, Long approverId) {
@@ -212,6 +300,18 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         Assert.isTrue(this.updateById(partyApply), "更新申请状态失败");
     }
 
+    /**
+     * 撤销流程
+     * 
+     * 功能说明：
+     * 1. 验证只有申请人才能撤销
+     * 2. 验证只有审批中（1）的申请才能撤销
+     * 3. 删除流程实例
+     * 4. 更新申请状态为已撤销（4）
+     * 
+     * @param applyId 申请ID
+     * @param userId 用户ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void revokeProcess(Long applyId, Long userId) {
@@ -227,12 +327,35 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         Assert.isTrue(this.updateById(partyApply), "撤销失败");
     }
 
+    /**
+     * 分页查询我发起的申请
+     * 
+     * 功能说明：
+     * 查询当前用户作为申请人的所有申请
+     * 
+     * @param queryParams 查询条件
+     * @param userId 用户ID
+     * @return 分页结果
+     */
     @Override
     public IPage<PartyApplyVO> pageMyStarted(PartyApplyPageQuery queryParams, Long userId) {
         queryParams.setApplicantId(userId);
         return pagePartyApply(queryParams);
     }
 
+    /**
+     * 分页查询我已审批的申请
+     * 
+     * 功能说明：
+     * 1. 查询当前用户的所有审批记录
+     * 2. 提取已审批的申请ID
+     * 3. 根据申请ID查询申请详情
+     * 4. 不限制申请状态，无论申请处于什么状态，只要审批过就能看到
+     * 
+     * @param queryParams 查询条件
+     * @param userId 用户ID
+     * @return 分页结果
+     */
     @Override
     public IPage<PartyApplyVO> pageMyApproved(PartyApplyPageQuery queryParams, Long userId) {
         List<PartyApprovalRecord> approvalRecords = approvalRecordService.list(
@@ -260,6 +383,20 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return resultPage;
     }
 
+    /**
+     * 分页查询我的待办任务
+     * 
+     * 功能说明：
+     * 1. 查询直接分配给当前用户的任务
+     * 2. 查询用户所属角色
+     * 3. 查询角色候选组任务
+     * 4. 合并两种任务的流程实例ID
+     * 5. 根据流程实例ID查询申请详情
+     * 
+     * @param queryParams 查询条件
+     * @param userId 用户ID
+     * @return 分页结果
+     */
     @Override
     public IPage<PartyApplyVO> pageTodoTasks(PartyApplyPageQuery queryParams, Long userId) {
         Long currentUserId = userId != null ? userId : UserContextHolder.getCurrentUserId();
@@ -306,6 +443,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return resultPage;
     }
 
+    /**
+     * 获取流程详情
+     * 
+     * @param processInstanceId 流程实例ID
+     * @return 申请详情VO
+     */
     @Override
     public PartyApplyVO getProcessDetail(String processInstanceId) {
         PartyApply partyApply = this.getOne(new LambdaQueryWrapper<PartyApply>()
@@ -316,6 +459,14 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return vo;
     }
 
+    /**
+     * 更新当前任务信息
+     * 
+     * 功能说明：
+     * 查询流程的当前任务，更新申请的当前节点名称和节点Key
+     * 
+     * @param partyApply 申请实体
+     */
     private void updateCurrentTaskInfo(PartyApply partyApply) {
         Task currentTask = taskService.createTaskQuery()
                 .processInstanceId(partyApply.getProcessInstanceId())
@@ -326,6 +477,18 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         }
     }
 
+    /**
+     * 丰富申请VO信息
+     * 
+     * 功能说明：
+     * 1. 设置申请类型名称
+     * 2. 设置紧急程度名称
+     * 3. 设置状态名称
+     * 4. 设置审批记录列表
+     * 5. 设置当前任务ID
+     * 
+     * @param vo 申请VO对象
+     */
     private void enrichPartyApplyVO(PartyApplyVO vo) {
         vo.setApplyTypeName(getApplyTypeName(vo.getApplyType()));
         vo.setUrgencyLevelName(getUrgencyLevelName(vo.getUrgencyLevel()));
@@ -344,6 +507,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         }
     }
 
+    /**
+     * 构建查询条件
+     * 
+     * @param queryParams 查询参数
+     * @return 查询包装器
+     */
     private LambdaQueryWrapper<PartyApply> getQueryWrapper(PartyApplyPageQuery queryParams) {
         LambdaQueryWrapper<PartyApply> qw = new LambdaQueryWrapper<>();
         qw.eq(PartyApply::getDeleted, 0);
@@ -359,6 +528,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return qw;
     }
 
+    /**
+     * 获取实体
+     * 
+     * @param id 主键ID
+     * @return 实体对象
+     */
     private PartyApply getEntity(Long id) {
         PartyApply entity = this.getOne(new LambdaQueryWrapper<PartyApply>()
                 .eq(PartyApply::getId, id)
@@ -368,6 +543,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         return entity;
     }
 
+    /**
+     * 根据任务Key获取审批阶段
+     * 
+     * @param taskKey 任务定义Key
+     * @return 审批阶段（1-班主任，2-辅导员，3-院长，4-书记）
+     */
     private Integer getApprovalStage(String taskKey) {
         switch (taskKey) {
             case "headTeacherApproval":
@@ -383,6 +564,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         }
     }
 
+    /**
+     * 根据任务Key获取审批角色编码
+     * 
+     * @param taskKey 任务定义Key
+     * @return 角色编码
+     */
     private String getApproverRoleCode(String taskKey) {
         switch (taskKey) {
             case "headTeacherApproval":
@@ -398,6 +585,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         }
     }
 
+    /**
+     * 根据角色编码获取角色名称
+     * 
+     * @param roleCode 角色编码
+     * @return 角色名称
+     */
     private String getApproverRoleName(String roleCode) {
 		return switch (roleCode) {
 			case "CLASSGUIDE" -> "班主任";
@@ -408,6 +601,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
 		};
     }
 
+    /**
+     * 获取审批人姓名
+     * 
+     * @param approverId 审批人ID
+     * @return 审批人姓名
+     */
     private String getApproverName(Long approverId) {
         if (approverId == null) {
             return "";
@@ -420,6 +619,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
         }
     }
 
+    /**
+     * 根据申请类型获取类型名称
+     * 
+     * @param applyType 申请类型
+     * @return 类型名称
+     */
     private String getApplyTypeName(Integer applyType) {
         if (applyType == null) return "";
 		return switch (applyType) {
@@ -430,6 +635,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
 		};
     }
 
+    /**
+     * 根据紧急程度获取程度名称
+     * 
+     * @param urgencyLevel 紧急程度
+     * @return 程度名称
+     */
     private String getUrgencyLevelName(Integer urgencyLevel) {
         if (urgencyLevel == null) return "";
 		return switch (urgencyLevel) {
@@ -440,6 +651,12 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
 		};
     }
 
+    /**
+     * 根据状态获取状态名称
+     * 
+     * @param status 状态值
+     * @return 状态名称
+     */
     private String getStatusName(Integer status) {
         if (status == null) return "";
 		return switch (status) {

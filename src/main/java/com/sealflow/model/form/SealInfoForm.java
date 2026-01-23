@@ -21,9 +21,9 @@ public class SealInfoForm {
     @Schema(description = "印章名称")
     private String name;
 
-    @NotNull(message = "所属分类ID不能为空")
-    @Schema(description = "所属分类ID")
-    private Long categoryId;
+    @NotBlank(message = "所属分类不能为空")
+    @Schema(description = "所属分类")
+    private String category;
 
     @Schema(description = "印章描述")
     private String description;
@@ -34,15 +34,7 @@ public class SealInfoForm {
     @Schema(description = "存放位置")
     private String storageLocation;
 
-    @NotNull(message = "保管人ID不能为空")
-    @Schema(description = "保管人ID")
-    private Long custodyUserId;
-
     @NotNull(message = "状态不能为空")
-    @Schema(description = "状态（0-停用，1-启用，2-损坏，3-丢失）")
+    @Schema(description = "状态（0-停用，1-启用）")
     private Integer status;
-
-    @NotNull(message = "是否归档不能为空")
-    @Schema(description = "是否归档（0未归档，1已归档）")
-    private Integer isArchived;
 }

@@ -1,6 +1,5 @@
 package com.sealflow.model.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.sealflow.model.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,9 +19,9 @@ public class SealInfo extends BaseEntity<Long> {
     private String name;
 
     /**
-     * 所属分类ID
+     * 所属分类
      */
-    private Long categoryId;
+    private String category;
 
     /**
      * 印章描述
@@ -40,12 +39,7 @@ public class SealInfo extends BaseEntity<Long> {
     private String storageLocation;
 
     /**
-     * 保管人ID
-     */
-    private Long custodyUserId;
-
-    /**
-     * 状态（0-停用，1-启用，2-损坏，3-丢失）
+     * 状态（0-停用，1-启用）
      */
     private Integer status;
 

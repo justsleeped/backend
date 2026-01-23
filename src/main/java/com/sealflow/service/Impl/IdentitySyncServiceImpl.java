@@ -17,6 +17,21 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 身份同步服务实现类
+ * 
+ * 主要功能：
+ * 1. 同步用户到Flowable工作流引擎
+ * 2. 同步角色到Flowable工作流引擎
+ * 3. 同步用户角色关系到Flowable
+ * 4. 从Flowable移除用户角色关系
+ * 5. 初始化系统角色（班主任、辅导员、学院院长、党委书记）
+ * 6. 同步所有用户到Flowable
+ * 7. 同步所有角色到Flowable
+ * 
+ * 实现说明：
+ * 使用ApplicationContextAware解决循环依赖问题，通过延迟加载获取依赖的服务
+ */
 @Slf4j
 @Service
 public class IdentitySyncServiceImpl implements IdentitySyncService, ApplicationContextAware {
@@ -24,27 +39,66 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
     private final IdentityService identityService;
     private ApplicationContext applicationContext;
 
+    /**
+     * 构造函数
+     * 
+     * @param identityService Flowable身份服务
+     */
     public IdentitySyncServiceImpl(IdentityService identityService) {
         this.identityService = identityService;
     }
 
+    /**
+     * 设置Spring应用上下文
+     * 用于解决循环依赖问题，通过延迟加载获取依赖的服务
+     * 
+     * @param applicationContext Spring应用上下文
+     */
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
+    /**
+     * 获取系统用户服务
+     * 通过ApplicationContext延迟加载，避免循环依赖
+     * 
+     * @return 系统用户服务
+     */
     private ISysUserService getSysUserService() {
         return applicationContext.getBean(ISysUserService.class);
     }
 
+    /**
+     * 获取系统角色服务
+     * 通过ApplicationContext延迟加载，避免循环依赖
+     * 
+     * @return 系统角色服务
+     */
     private ISysRoleService getSysRoleService() {
         return applicationContext.getBean(ISysRoleService.class);
     }
 
+    /**
+     * 获取系统用户角色服务
+     * 通过ApplicationContext延迟加载，避免循环依赖
+     * 
+     * @return 系统用户角色服务
+     */
     private ISysUserRoleService getSysUserRoleService() {
         return applicationContext.getBean(ISysUserRoleService.class);
     }
 
+    /**
+     * 同步用户到Flowable工作流引擎
+     * 
+     * 功能说明：
+     * 1. 检查用户是否已存在于Flowable
+     * 2. 如果不存在，创建新用户
+     * 3. 如果存在，更新用户信息
+     * 
+     * @param sysUser 系统用户
+     */
     @Override
     public void syncUserToFlowable(SysUser sysUser) {
         if (sysUser == null || sysUser.getId() == null) {
@@ -70,6 +124,16 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
         }
     }
 
+    /**
+     * 同步角色到Flowable工作流引擎
+     * 
+     * 功能说明：
+     * 1. 检查角色是否已存在于Flowable
+     * 2. 如果不存在，创建新角色（Group）
+     * 3. 如果存在，更新角色信息
+     * 
+     * @param sysRole 系统角色
+     */
     @Override
     public void syncRoleToFlowable(SysRole sysRole) {
         if (sysRole == null || sysRole.getId() == null) {
@@ -93,6 +157,16 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
         }
     }
 
+    /**
+     * 同步用户角色关系到Flowable
+     * 
+     * 功能说明：
+     * 1. 检查用户是否已经是该角色的成员
+     * 2. 如果不是，创建成员关系
+     * 
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     */
     @Override
     public void syncUserRoleToFlowable(Long userId, Long roleId) {
         SysRole sysRole = getSysRoleService().getById(roleId);
@@ -116,6 +190,12 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
         }
     }
 
+    /**
+     * 从Flowable移除用户角色关系
+     * 
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     */
     @Override
     public void removeUserRoleFromFlowable(Long userId, Long roleId) {
         SysRole sysRole = getSysRoleService().getById(roleId);
@@ -128,6 +208,16 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
         log.info("从Flowable移除用户角色关系: userId={}, groupId={}", userId, sysRole.getCode());
     }
 
+    /**
+     * 初始化系统角色
+     * 
+     * 功能说明：
+     * 在Flowable中创建系统所需的角色：
+     * - CLASSGUIDE（班主任）
+     * - MENTOR（辅导员）
+     * - DEAN（学院院长）
+     * - PARTYSECRETARY（党委书记）
+     */
     @Override
     public void initSystemRoles() {
         String[] systemRoles = {"CLASSGUIDE", "MENTOR", "DEAN", "PARTYSECRETARY"};
@@ -150,6 +240,12 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
         }
     }
 
+    /**
+     * 同步所有用户到Flowable
+     * 
+     * 功能说明：
+     * 遍历系统中的所有用户，逐个同步到Flowable工作流引擎
+     */
     @Override
     public void syncAllUsers() {
         List<SysUser> users = getSysUserService().list();
@@ -166,6 +262,12 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
         log.info("所有用户同步完成");
     }
 
+    /**
+     * 同步所有角色到Flowable
+     * 
+     * 功能说明：
+     * 遍历系统中的所有角色，逐个同步到Flowable工作流引擎
+     */
     @Override
     public void syncAllRoles() {
         List<SysRole> roles = getSysRoleService().list();

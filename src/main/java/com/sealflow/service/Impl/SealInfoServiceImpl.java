@@ -118,11 +118,9 @@ public class SealInfoServiceImpl extends ServiceImpl<SealInfoMapper, SealInfo> i
         if (queryParams != null) {
             qw.like(StringUtils.isNotBlank(queryParams.getCode()), SealInfo::getCode, queryParams.getCode());
             qw.like(StringUtils.isNotBlank(queryParams.getName()), SealInfo::getName, queryParams.getName());
-            qw.eq(queryParams.getCategoryId() != null, SealInfo::getCategoryId, queryParams.getCategoryId());
+            qw.like(StringUtils.isNotBlank(queryParams.getCategory()), SealInfo::getCategory, queryParams.getCategory());
             qw.like(StringUtils.isNotBlank(queryParams.getStorageLocation()), SealInfo::getStorageLocation, queryParams.getStorageLocation());
-            qw.eq(queryParams.getCustodyUserId() != null, SealInfo::getCustodyUserId, queryParams.getCustodyUserId());
             qw.eq(queryParams.getStatus() != null, SealInfo::getStatus, queryParams.getStatus());
-            qw.eq(queryParams.getIsArchived() != null, SealInfo::getIsArchived, queryParams.getIsArchived());
         }
         qw.orderByDesc(SealInfo::getCreateTime);
         return qw;
