@@ -13,6 +13,7 @@ import com.sealflow.model.form.SysUserForm;
 import com.sealflow.model.query.SysUserPageQuery;
 import com.sealflow.model.vo.SysRoleVO;
 import com.sealflow.model.vo.SysUserVO;
+import com.sealflow.service.IdentitySyncService;
 import com.sealflow.service.ISysRoleService;
 import com.sealflow.service.ISysUserRoleService;
 import com.sealflow.service.ISysUserService;
@@ -33,6 +34,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	private final ISysRoleService sysRoleService;
 	private final ISysUserRoleService sysUserRoleService;
 	private final PasswordEncoder passwordEncoder;
+	private final IdentitySyncService identitySyncService;
 	@Resource
 	private SysUserConverter converter;
 
@@ -46,6 +48,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		formData.setPassword(passwordEncoder.encode(formData.getPassword()));
 		SysUser entity = converter.formToEntity(formData);
 		Assert.isTrue(this.save(entity), "添加失败");
+
+		identitySyncService.syncUserToFlowable(entity);
 
 		// 保存用户角色关联
 		if (formData.getRoleIds() != null && !formData.getRoleIds().isEmpty()) {
@@ -75,6 +79,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		SysUser sysUser = converter.formToEntity(formData);
 		sysUser.setId(id);
 		Assert.isTrue(this.updateById(sysUser), "修改失败");
+
+		identitySyncService.syncUserToFlowable(sysUser);
 
 		// 更新用户角色关联
 		if (formData.getRoleIds() != null) {

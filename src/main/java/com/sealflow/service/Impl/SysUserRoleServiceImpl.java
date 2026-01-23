@@ -2,9 +2,11 @@ package com.sealflow.service.Impl;
 
 import com.sealflow.mapper.SysUserRoleMapper;
 import com.sealflow.model.entity.SysUserRole;
+import com.sealflow.service.IdentitySyncService;
 import com.sealflow.service.ISysUserRoleService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,7 +16,10 @@ import java.util.stream.Collectors;
  * 用户角色关联服务实现类
  */
 @Service
+@RequiredArgsConstructor
 public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUserRole> implements ISysUserRoleService {
+
+    private final IdentitySyncService identitySyncService;
 
     @Override
     public void setUserRoles(Long userId, List<Long> roleIds) {
@@ -29,6 +34,8 @@ public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 userRole.setUserId(userId);
                 userRole.setRoleId(roleId);
                 this.save(userRole);
+
+                identitySyncService.syncUserRoleToFlowable(userId, roleId);
             }
         }
     }

@@ -10,6 +10,7 @@ import com.sealflow.model.form.SysRoleForm;
 import com.sealflow.model.query.SysRolePageQuery;
 import com.sealflow.model.vo.SysPermissionVO;
 import com.sealflow.model.vo.SysRoleVO;
+import com.sealflow.service.IdentitySyncService;
 import com.sealflow.service.ISysPermissionService;
 import com.sealflow.service.ISysRolePermissionService;
 import com.sealflow.service.ISysRoleService;
@@ -36,6 +37,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 
     private final ISysRolePermissionService sysRolePermissionService;
     private final ISysPermissionService sysPermissionService;
+    private final IdentitySyncService identitySyncService;
 
 	/**
      * 保存角色表
@@ -46,6 +48,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
     public Long saveSysRole(SysRoleForm formData) {
         SysRole entity = converter.formToEntity(formData);
         Assert.isTrue(this.save(entity), "添加失败");
+
+        identitySyncService.syncRoleToFlowable(entity);
 
         // 保存角色权限关联
         if (formData.getPermissionIds() != null && !formData.getPermissionIds().isEmpty()) {
@@ -68,6 +72,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         SysRole sysRole = converter.formToEntity(formData);
         sysRole.setId(id);
         Assert.isTrue(this.updateById(sysRole), "修改失败");
+
+        identitySyncService.syncRoleToFlowable(sysRole);
 
         // 更新角色权限关联
         if (formData.getPermissionIds() != null) {

@@ -20,6 +20,7 @@ import com.sealflow.model.vo.PartyApprovalRecordVO;
 import com.sealflow.model.vo.SysUserVO;
 import com.sealflow.service.IPartyApprovalRecordService;
 import com.sealflow.service.IPartyApplyService;
+import com.sealflow.service.ISysUserRoleService;
 
 import lombok.RequiredArgsConstructor;
 import org.flowable.engine.HistoryService;
@@ -48,6 +49,7 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
     private final HistoryService historyService;
     private final RepositoryService repositoryService;
     private final com.sealflow.service.ISysUserService sysUserService;
+    private final ISysUserRoleService sysUserRoleService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -233,48 +235,60 @@ public class PartyApplyServiceImpl extends ServiceImpl<PartyApplyMapper, PartyAp
 
     @Override
     public IPage<PartyApplyVO> pageMyApproved(PartyApplyPageQuery queryParams, Long userId) {
+        List<PartyApprovalRecord> approvalRecords = approvalRecordService.list(
+                new LambdaQueryWrapper<PartyApprovalRecord>()
+                        .eq(PartyApprovalRecord::getApproverId, userId)
+        );
+
+        if (approvalRecords.isEmpty()) {
+            return new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
+        }
+
+        Set<Long> approvedApplyIds = approvalRecords.stream()
+                .map(PartyApprovalRecord::getApplyId)
+                .collect(Collectors.toSet());
+
         Page<PartyApply> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
         LambdaQueryWrapper<PartyApply> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(PartyApply::getDeleted, 0);
-        wrapper.in(PartyApply::getStatus, Arrays.asList(2, 3, 4));
+        wrapper.in(PartyApply::getId, approvedApplyIds);
         wrapper.orderByDesc(PartyApply::getApplyTime);
 
         Page<PartyApply> partyApplyPage = this.baseMapper.selectPage(page, wrapper);
         IPage<PartyApplyVO> resultPage = converter.entityToVOForPage(partyApplyPage);
-
-        List<Long> applyIds = resultPage.getRecords().stream()
-                .map(PartyApplyVO::getId)
-                .collect(Collectors.toList());
-
-        if (!applyIds.isEmpty()) {
-            List<PartyApprovalRecord> approvalRecords = approvalRecordService.list(
-                    new LambdaQueryWrapper<PartyApprovalRecord>()
-                            .in(PartyApprovalRecord::getApplyId, applyIds)
-                            .eq(PartyApprovalRecord::getApproverId, userId)
-            );
-
-            Set<Long> approvedApplyIds = approvalRecords.stream()
-                    .map(PartyApprovalRecord::getApplyId)
-                    .collect(Collectors.toSet());
-
-            resultPage.getRecords().removeIf(vo -> !approvedApplyIds.contains(vo.getId()));
-        }
-
         resultPage.getRecords().forEach(this::enrichPartyApplyVO);
         return resultPage;
     }
 
     @Override
     public IPage<PartyApplyVO> pageTodoTasks(PartyApplyPageQuery queryParams, Long userId) {
-        Long currentUserId = userId != null ? userId : com.sealflow.common.context.UserContextHolder.getCurrentUserId();
+        Long currentUserId = userId != null ? userId : UserContextHolder.getCurrentUserId();
 
-        List<String> processInstanceIds = taskService.createTaskQuery()
-                .taskCandidateOrAssigned(currentUserId.toString())
-                .list()
-                .stream()
+        Set<String> processInstanceIds = new HashSet<>();
+
+        List<Task> assignedTasks = taskService.createTaskQuery()
+                .taskAssignee(currentUserId.toString())
+                .list();
+        processInstanceIds.addAll(assignedTasks.stream()
                 .map(Task::getProcessInstanceId)
-                .distinct()
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+
+        List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(currentUserId);
+        if (roleIds != null && !roleIds.isEmpty()) {
+            List<com.sealflow.model.vo.SysRoleVO> roles = sysUserService.getSysUserVo(currentUserId).getRoles();
+            if (roles != null && !roles.isEmpty()) {
+                List<String> roleCodes = roles.stream()
+                        .map(com.sealflow.model.vo.SysRoleVO::getCode)
+                        .collect(Collectors.toList());
+                
+                List<Task> candidateTasks = taskService.createTaskQuery()
+                        .taskCandidateGroupIn(roleCodes)
+                        .list();
+                processInstanceIds.addAll(candidateTasks.stream()
+                        .map(Task::getProcessInstanceId)
+                        .collect(Collectors.toList()));
+            }
+        }
 
         if (processInstanceIds.isEmpty()) {
             return new Page<>(queryParams.getPageNum(), queryParams.getPageSize());

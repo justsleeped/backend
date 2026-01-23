@@ -38,7 +38,7 @@ spring:
     flowable:
         database-schema-update: true
         deployment-mode: single-engine
-        db-identity-used: false
+        db-identity-used: true
         history-level: audit
         process-definition-location-prefix: classpath*:/processes/
         check-process-definitions: false

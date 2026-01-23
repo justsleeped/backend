@@ -44,4 +44,9 @@ public class FlowableConfig {
     public HistoryService historyService(ProcessEngine processEngine) {
         return processEngine.getHistoryService();
     }
+
+    @Bean
+    public IdentityService identityService(ProcessEngine processEngine) {
+        return processEngine.getIdentityService();
+    }
 }
