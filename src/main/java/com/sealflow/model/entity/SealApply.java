@@ -1,17 +1,20 @@
 package com.sealflow.model.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.sealflow.model.base.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Schema(description = "党章申请表")
-public class PartyApply extends BaseEntity<Long> {
+@TableName("seal_apply")
+@Schema(description = "印章使用申请表")
+public class SealApply extends BaseEntity<Long> {
 
     @Schema(description = "申请单号")
     private String applyNo;
@@ -25,14 +28,31 @@ public class PartyApply extends BaseEntity<Long> {
     @Schema(description = "申请人学号")
     private String applicantNo;
 
-    @Schema(description = "申请标题")
-    private String title;
+    @Schema(description = "申请印章ID")
+    private Long sealId;
 
-    @Schema(description = "申请内容")
-    private String content;
+    @Schema(description = "印章名称（冗余）")
+    private String sealName;
 
-    @Schema(description = "申请类型（1-入党申请，2-转正申请，3-其他）")
-    private Integer applyType;
+    @Schema(description = "印章分类（1-院章，2-党章）")
+    private Integer sealCategory;
+
+    @Schema(description = "印章类型（1-物理章，2-电子章）")
+    private Integer sealType;
+
+    @Schema(description = "申请事由")
+    private String applyReason;
+
+    @Schema(description = "具体用途说明")
+    private String usageDetails;
+
+    @Schema(description = "申请日期")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate applyDate;
+
+    @Schema(description = "预计使用时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime expectedUseDate;
 
     @Schema(description = "紧急程度（1-普通，2-紧急，3-特急）")
     private Integer urgencyLevel;
@@ -51,6 +71,12 @@ public class PartyApply extends BaseEntity<Long> {
 
     @Schema(description = "当前节点Key")
     private String currentNodeKey;
+
+    @Schema(description = "当前审批人ID")
+    private Long currentApproverId;
+
+    @Schema(description = "当前审批人姓名")
+    private String currentApproverName;
 
     @Schema(description = "状态（0-待审批，1-审批中，2-已通过，3-已拒绝，4-已撤销）")
     private Integer status;

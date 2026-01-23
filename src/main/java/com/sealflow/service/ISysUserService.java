@@ -11,9 +11,6 @@ import java.util.List;
 
 /**
  * 用户表表服务接口
- *
- * @author makejava
- * @date 2025-04-24
  */
 public interface ISysUserService extends IService<SysUser> {
     /**
@@ -51,7 +48,6 @@ public interface ISysUserService extends IService<SysUser> {
      *
      * @param queryParams 筛选条件
      * @return IPage<SysUserVO> 分页对象
-     * @return 查询结果
      */
     IPage<SysUserVO> pageSysUser(SysUserPageQuery queryParams);
 
@@ -60,7 +56,14 @@ public interface ISysUserService extends IService<SysUser> {
      *
      * @param queryParams 筛选条件
      * @return List<SysUserVO> 列表对象
-     * @return 查询结果
      */
     List<SysUserVO> listSysUser(SysUserPageQuery queryParams);
+
+    /**
+     * 获取用户角色
+     *
+     * @param userId 用户ID
+     * @return List<String> 角色列表
+     */
+    List<String> getRole(Long userId);
 }

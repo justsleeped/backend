@@ -1,25 +1,20 @@
-package com.sealflow.model.entity;
+package com.sealflow.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.sealflow.model.base.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("party_approval_record")
-@Schema(description = "党章审批记录表")
-public class PartyApprovalRecord extends BaseEntity<Long> {
+@Schema(description = "印章审批记录列表对象")
+public class SealApplyRecordVO {
+
+    @Schema(description = "审批记录ID")
+    private Long id;
 
     @Schema(description = "申请单ID")
     private Long applyId;
-
-    @Schema(description = "流程实例ID")
-    private String processInstanceId;
 
     @Schema(description = "任务ID")
     private String taskId;
@@ -30,8 +25,11 @@ public class PartyApprovalRecord extends BaseEntity<Long> {
     @Schema(description = "任务Key")
     private String taskKey;
 
-    @Schema(description = "审批阶段（1-班主任，2-辅导员，3-学院院长，4-党委书记）")
+    @Schema(description = "审批阶段")
     private Integer approvalStage;
+
+    @Schema(description = "审批阶段名称")
+    private String approvalStageName;
 
     @Schema(description = "审批人ID")
     private Long approverId;
@@ -47,6 +45,9 @@ public class PartyApprovalRecord extends BaseEntity<Long> {
 
     @Schema(description = "审批结果（1-同意，2-拒绝）")
     private Integer approveResult;
+
+    @Schema(description = "审批结果名称")
+    private String approveResultName;
 
     @Schema(description = "审批意见")
     private String approveComment;

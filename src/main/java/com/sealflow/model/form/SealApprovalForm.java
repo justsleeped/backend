@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
-@Schema(description = "党章审批表单信息")
-public class PartyApprovalForm {
+@Schema(description = "印章审批表单信息")
+public class SealApprovalForm {
 
     @Schema(description = "任务ID")
     private String taskId;

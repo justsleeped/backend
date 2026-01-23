@@ -18,7 +18,7 @@ public class ActivitiProcessDeployer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         try {
-            String processKey = "partyApplyProcess";
+            String processKey = "sealApplyProcess";
             
             long count = repositoryService.createProcessDefinitionQuery()
                     .processDefinitionKey(processKey)
@@ -26,16 +26,16 @@ public class ActivitiProcessDeployer implements ApplicationRunner {
             
             if (count == 0) {
                 Deployment deployment = repositoryService.createDeployment()
-                        .addClasspathResource("processes/party-apply-process.bpmn20.xml")
-                        .name("党章申请流程")
+                        .addClasspathResource("processes/seal-apply-process.bpmn20.xml")
+                        .name("印章使用申请流程")
                         .deploy();
                 
-                log.info("党章申请流程部署成功，部署ID: {}", deployment.getId());
+                log.info("印章使用申请流程部署成功，部署ID: {}", deployment.getId());
             } else {
-                log.info("党章申请流程已存在，跳过部署");
+                log.info("印章使用申请流程已存在，跳过部署");
             }
         } catch (Exception e) {
-            log.error("部署党章申请流程失败", e);
+            log.error("部署印章使用申请流程失败", e);
         }
     }
 }

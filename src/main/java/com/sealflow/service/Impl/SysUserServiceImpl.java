@@ -139,9 +139,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		IPage<SysUserVO> resultPage = converter.entityToVOForPage(SysUserPage);
 
 		// 为每个用户设置角色信息
-		resultPage.getRecords().forEach(userVO -> {
-			setUserRoleInfo(userVO, userVO.getId());
-		});
+		resultPage.getRecords().forEach(userVO -> setUserRoleInfo(userVO, userVO.getId()));
 
 		return resultPage;
 	}
@@ -151,11 +149,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		List<SysUserVO> userList = converter.entityToVo(this.list(getQueryWrapper(queryParams)));
 
 		// 为每个用户设置角色信息
-		userList.forEach(userVO -> {
-			setUserRoleInfo(userVO, userVO.getId());
-		});
+		userList.forEach(userVO -> setUserRoleInfo(userVO, userVO.getId()));
 
 		return userList;
+	}
+
+	@Override
+	public List<String> getRole(Long userId) {
+		List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
+		List<SysRoleVO> roleList = sysRoleService.listByRoleIds(roleIds);
+		return roleList.stream().map(SysRoleVO::getName).collect(Collectors.toList());
 	}
 
 	private LambdaQueryWrapper<SysUser> getQueryWrapper(SysUserPageQuery queryParams) {

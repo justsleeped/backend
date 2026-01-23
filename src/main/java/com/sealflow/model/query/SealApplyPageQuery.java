@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Schema(description = "查询党章申请对象")
-public class PartyApplyPageQuery extends BasePageQuery {
+@Schema(description = "查询印章使用申请对象")
+public class SealApplyPageQuery extends BasePageQuery {
 
     @Schema(description = "申请单号")
     private String applyNo;
@@ -22,11 +22,17 @@ public class PartyApplyPageQuery extends BasePageQuery {
     @Schema(description = "申请人学号")
     private String applicantNo;
 
-    @Schema(description = "申请标题")
-    private String title;
+    @Schema(description = "印章ID")
+    private Long sealId;
 
-    @Schema(description = "申请类型（1-入党申请，2-转正申请，3-其他）")
-    private Integer applyType;
+    @Schema(description = "印章名称")
+    private String sealName;
+
+    @Schema(description = "印章分类（1-院章，2-党章）")
+    private Integer sealCategory;
+
+    @Schema(description = "印章类型（1-物理章，2-电子章）")
+    private Integer sealType;
 
     @Schema(description = "紧急程度（1-普通，2-紧急，3-特急）")
     private Integer urgencyLevel;

@@ -4,12 +4,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Schema(description = "党章申请列表对象")
-public class PartyApplyVO {
+@Schema(description = "印章使用申请列表对象")
+public class SealApplyVO {
 
     @Schema(description = "申请单ID")
     private Long id;
@@ -26,17 +27,37 @@ public class PartyApplyVO {
     @Schema(description = "申请人学号")
     private String applicantNo;
 
-    @Schema(description = "申请标题")
-    private String title;
+    @Schema(description = "申请印章ID")
+    private Long sealId;
 
-    @Schema(description = "申请内容")
-    private String content;
+    @Schema(description = "印章名称")
+    private String sealName;
 
-    @Schema(description = "申请类型（1-入党申请，2-转正申请，3-其他）")
-    private Integer applyType;
+    @Schema(description = "印章分类（1-院章，2-党章）")
+    private Integer sealCategory;
 
-    @Schema(description = "申请类型名称")
-    private String applyTypeName;
+    @Schema(description = "印章分类名称")
+    private String sealCategoryName;
+
+    @Schema(description = "印章类型（1-物理章，2-电子章）")
+    private Integer sealType;
+
+    @Schema(description = "印章类型名称")
+    private String sealTypeName;
+
+    @Schema(description = "申请事由")
+    private String applyReason;
+
+    @Schema(description = "具体用途说明")
+    private String usageDetails;
+
+    @Schema(description = "申请日期")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate applyDate;
+
+    @Schema(description = "预计使用时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime expectedUseDate;
 
     @Schema(description = "紧急程度（1-普通，2-紧急，3-特急）")
     private Integer urgencyLevel;
@@ -55,6 +76,12 @@ public class PartyApplyVO {
 
     @Schema(description = "当前节点Key")
     private String currentNodeKey;
+
+    @Schema(description = "当前审批人ID")
+    private Long currentApproverId;
+
+    @Schema(description = "当前审批人姓名")
+    private String currentApproverName;
 
     @Schema(description = "状态（0-待审批，1-审批中，2-已通过，3-已拒绝，4-已撤销）")
     private Integer status;
@@ -77,7 +104,7 @@ public class PartyApplyVO {
     private String attachmentUrl;
 
     @Schema(description = "审批记录列表")
-    private List<PartyApprovalRecordVO> approvalRecords;
+    private List<SealApplyRecordVO> approvalRecords;
 
     @Schema(description = "当前任务ID")
     private String currentTaskId;

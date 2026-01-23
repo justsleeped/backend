@@ -1,10 +1,10 @@
 package com.sealflow.mapper;
 
-import com.sealflow.model.entity.PartyApprovalRecord;
+import com.sealflow.model.entity.SealApply;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface PartyApprovalRecordMapper extends BaseMapper<PartyApprovalRecord> {
+public interface SealApplyMapper extends BaseMapper<SealApply> {
 
 }

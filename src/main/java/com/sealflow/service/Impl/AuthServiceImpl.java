@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,7 +59,14 @@ public class AuthServiceImpl implements IAuthService {
 		String redisKey = tokenProperties.getRedisTokenPrefix() + token;
 		redisUtil.set(redisKey, user.getId(), tokenProperties.getExpiration() / 1000);
 
-		return TokenVO.builder().accessToken(token).build();
+		// 查询用户角色
+		List<String> role = userService.getRole(user.getId());
+
+		return TokenVO.builder()
+				.accessToken(token)
+				.realName(user.getRealName())
+				.role(role)
+				.build();
 	}
 
 	@Override

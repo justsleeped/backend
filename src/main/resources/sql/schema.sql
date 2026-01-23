@@ -102,78 +102,61 @@ CREATE TABLE IF NOT EXISTS seal_info
 -- 印章使用申请表
 CREATE TABLE IF NOT EXISTS seal_apply
 (
-    id                BIGINT PRIMARY KEY COMMENT '主键ID',
-    apply_no          VARCHAR(64) NOT NULL UNIQUE COMMENT '申请单号',
-    applicant_id      BIGINT      NOT NULL COMMENT '申请人ID',
-    seal_id           BIGINT      NOT NULL COMMENT '申请印章ID',
-    apply_reason      TEXT        NOT NULL COMMENT '申请事由',
-    usage_type        VARCHAR(32) NOT NULL COMMENT '用途类型（合同专用章、公章、财务章等）',
-    usage_details     TEXT COMMENT '具体用途说明',
-    apply_date        DATE        NOT NULL COMMENT '申请日期',
-    expected_use_date DATETIME COMMENT '预计使用时间',
-    urgency_level     TINYINT  DEFAULT 1 COMMENT '紧急程度（1普通，2紧急，3特急）',
-    status            TINYINT  DEFAULT 0 COMMENT '状态（0待审批，1审批中，2已批准，3已拒绝，4已完成，5已取消）',
-    approve_remark    TEXT COMMENT '审批意见',
-    create_by         BIGINT   DEFAULT 0,
-    create_time       DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_by         BIGINT   DEFAULT 0,
-    update_time       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted           TINYINT  DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
-) COMMENT ='印章使用申请表';
+    id                     BIGINT PRIMARY KEY COMMENT '主键ID',
+    apply_no               VARCHAR(64)  NOT NULL UNIQUE COMMENT '申请单号',
+    applicant_id           BIGINT       NOT NULL COMMENT '申请人ID',
+    applicant_name         VARCHAR(64)  COMMENT '申请人姓名',
+    applicant_no           VARCHAR(64)  COMMENT '申请人学号',
+    seal_id                BIGINT       NOT NULL COMMENT '申请印章ID',
+    seal_name              VARCHAR(100) COMMENT '印章名称（冗余）',
+    seal_category          TINYINT      COMMENT '印章分类（1-院章，2-党章）',
+    seal_type              TINYINT      COMMENT '印章类型（1-物理章，2-电子章）',
+    apply_reason           TEXT         NOT NULL COMMENT '申请事由',
+    usage_details          TEXT         COMMENT '具体用途说明',
+    apply_date             DATE         NOT NULL COMMENT '申请日期',
+    expected_use_date      DATETIME     COMMENT '预计使用时间',
+    urgency_level          TINYINT      DEFAULT 1 COMMENT '紧急程度（1-普通，2-紧急，3-特急）',
+    process_instance_id    VARCHAR(64)  COMMENT '流程实例ID',
+    process_definition_key VARCHAR(64)  COMMENT '流程定义Key',
+    process_name           VARCHAR(128) COMMENT '流程名称',
+    current_node_name      VARCHAR(128) COMMENT '当前节点名称',
+    current_node_key       VARCHAR(64)  COMMENT '当前节点Key',
+    current_approver_id    BIGINT       COMMENT '当前审批人ID',
+    current_approver_name  VARCHAR(64)  COMMENT '当前审批人姓名',
+    status                 TINYINT      DEFAULT 0 COMMENT '状态（0-待审批，1-审批中，2-已通过，3-已拒绝，4-已撤销）',
+    reject_reason          TEXT         COMMENT '拒绝原因',
+    apply_time             DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
+    finish_time            DATETIME     COMMENT '完成时间',
+    attachment_url         VARCHAR(500) COMMENT '附件URL',
+    create_by              BIGINT       DEFAULT 0,
+    create_time            DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    update_by              BIGINT       DEFAULT 0,
+    update_time            DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted                TINYINT      DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
+) COMMENT = '印章使用申请表';
 
--- 印章审批流程表
-CREATE TABLE IF NOT EXISTS seal_approval_process
+-- 印章审批记录表
+CREATE TABLE IF NOT EXISTS seal_apply_record
 (
-    id             BIGINT PRIMARY KEY COMMENT '主键ID',
-    apply_id       BIGINT NOT NULL COMMENT '申请单ID',
-    approval_stage INT    NOT NULL COMMENT '审批阶段（1、2、3...）',
-    approver_id    BIGINT NOT NULL COMMENT '审批人ID',
-    approve_status TINYINT  DEFAULT 0 COMMENT '审批状态（0待审批，1已通过，2已拒绝）',
-    approve_time   DATETIME COMMENT '审批时间',
-    approve_remark TEXT COMMENT '审批意见',
-    create_by      BIGINT   DEFAULT 0,
-    create_time    DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_by      BIGINT   DEFAULT 0,
-    update_time    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted        TINYINT  DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
-) COMMENT ='印章审批流程表';
-
--- 印章使用记录表
-CREATE TABLE IF NOT EXISTS seal_usage_record
-(
-    id               BIGINT PRIMARY KEY COMMENT '主键ID',
-    apply_id         BIGINT   NOT NULL COMMENT '申请单ID',
-    seal_id          BIGINT   NOT NULL COMMENT '印章ID',
-    usage_user_id    BIGINT   NOT NULL COMMENT '使用人ID',
-    usage_date       DATETIME NOT NULL COMMENT '使用时间',
-    usage_purpose    TEXT COMMENT '使用目的',
-    document_count   INT      DEFAULT 1 COMMENT '用印文件数量',
-    actual_seal_area TEXT COMMENT '实际盖印区域',
-    operator_id      BIGINT   NOT NULL COMMENT '操作员ID',
-    attachments      TEXT COMMENT '附件（用印前后照片、文件扫描件等）',
-    create_by        BIGINT   DEFAULT 0,
-    create_time      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_by        BIGINT   DEFAULT 0,
-    update_time      DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted          TINYINT  DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
-) COMMENT ='印章使用记录表';
-
--- 印章借用归还表
-CREATE TABLE IF NOT EXISTS seal_borrow_return
-(
-    id                   BIGINT PRIMARY KEY COMMENT '主键ID',
-    apply_id             BIGINT   NOT NULL COMMENT '申请单ID',
-    seal_id              BIGINT   NOT NULL COMMENT '印章ID',
-    borrower_id          BIGINT   NOT NULL COMMENT '借用人ID',
-    borrow_date          DATETIME NOT NULL COMMENT '借用时间',
-    expected_return_date DATETIME NOT NULL COMMENT '预计归还时间',
-    actual_return_date   DATETIME COMMENT '实际归还时间',
-    borrow_reason        TEXT COMMENT '借用原因',
-    custodian_remark     TEXT COMMENT '保管人备注',
-    status               TINYINT  DEFAULT 0 COMMENT '状态（0借用中，1已归还，2逾期）',
-    create_by            BIGINT   DEFAULT 0,
-    create_time          DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_by            BIGINT   DEFAULT 0,
-    update_time          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted              TINYINT  DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
-) COMMENT ='印章借用归还表';
+    id                  BIGINT       PRIMARY KEY COMMENT '主键ID',
+    apply_id            BIGINT       NOT NULL COMMENT '申请单ID',
+    process_instance_id VARCHAR(64)  NOT NULL COMMENT '流程实例ID',
+    task_id             VARCHAR(64)  NOT NULL COMMENT '任务ID',
+    task_name           VARCHAR(128) NOT NULL COMMENT '任务名称',
+    task_key            VARCHAR(64)  NOT NULL COMMENT '任务Key',
+    approval_stage      INT          NOT NULL COMMENT '审批阶段（1-班主任，2-辅导员，3-学院院长，4-党委书记等）',
+    approver_id         BIGINT       NOT NULL COMMENT '审批人ID',
+    approver_name       VARCHAR(64)  COMMENT '审批人姓名',
+    approver_role_code  VARCHAR(64)  COMMENT '审批人角色编码',
+    approver_role_name  VARCHAR(64)  COMMENT '审批人角色名称',
+    approve_result      TINYINT      COMMENT '审批结果（1-同意，2-拒绝）',
+    approve_comment     TEXT         COMMENT '审批意见',
+    approve_time        DATETIME     COMMENT '审批时间',
+    task_start_time     DATETIME     COMMENT '任务开始时间',
+    task_end_time       DATETIME     COMMENT '任务结束时间',
+    create_by           BIGINT       DEFAULT 0,
+    create_time         DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    update_by           BIGINT       DEFAULT 0,
+    update_time         DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted             TINYINT      DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
+) COMMENT = '印章审批记录表';
