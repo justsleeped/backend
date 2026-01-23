@@ -1,6 +1,5 @@
 package com.sealflow.service.Impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -116,11 +115,10 @@ public class SealInfoServiceImpl extends ServiceImpl<SealInfoMapper, SealInfo> i
         LambdaQueryWrapper<SealInfo> qw = new LambdaQueryWrapper<>();
         qw.eq(SealInfo::getDeleted, 0);
         if (queryParams != null) {
-            qw.like(StringUtils.isNotBlank(queryParams.getCode()), SealInfo::getCode, queryParams.getCode());
             qw.like(StringUtils.isNotBlank(queryParams.getName()), SealInfo::getName, queryParams.getName());
-            qw.like(StringUtils.isNotBlank(queryParams.getCategory()), SealInfo::getCategory, queryParams.getCategory());
-            qw.like(StringUtils.isNotBlank(queryParams.getStorageLocation()), SealInfo::getStorageLocation, queryParams.getStorageLocation());
+            qw.eq(queryParams.getCategory() != null, SealInfo::getCategory, queryParams.getCategory());
             qw.eq(queryParams.getStatus() != null, SealInfo::getStatus, queryParams.getStatus());
+            qw.eq(queryParams.getSealType() != null, SealInfo::getSealType, queryParams.getSealType());
         }
         qw.orderByDesc(SealInfo::getCreateTime);
         return qw;

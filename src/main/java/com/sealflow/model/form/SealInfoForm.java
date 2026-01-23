@@ -21,9 +21,9 @@ public class SealInfoForm {
     @Schema(description = "印章名称")
     private String name;
 
-    @NotBlank(message = "所属分类不能为空")
-    @Schema(description = "所属分类")
-    private String category;
+    @NotNull(message = "所属分类不能为空")
+    @Schema(description = "所属分类（1-院章，2-党章）")
+    private Integer category;
 
     @Schema(description = "印章描述")
     private String description;
@@ -37,4 +37,8 @@ public class SealInfoForm {
     @NotNull(message = "状态不能为空")
     @Schema(description = "状态（0-停用，1-启用）")
     private Integer status;
+
+    @NotNull(message = "印章类型不能为空")
+    @Schema(description = "印章类型（1-物理章，2-电子章）")
+    private Integer sealType;
 }

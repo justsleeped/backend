@@ -1,6 +1,5 @@
 package com.sealflow.model.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.sealflow.model.base.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,7 +10,6 @@ import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("party_apply")
 @Schema(description = "党章申请表")
 public class PartyApply extends BaseEntity<Long> {
 

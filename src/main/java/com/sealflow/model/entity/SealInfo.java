@@ -19,9 +19,9 @@ public class SealInfo extends BaseEntity<Long> {
     private String name;
 
     /**
-     * 所属分类
+     * 所属分类（1-院章，2-党章）
      */
-    private String category;
+    private Integer category;
 
     /**
      * 印章描述
@@ -44,7 +44,7 @@ public class SealInfo extends BaseEntity<Long> {
     private Integer status;
 
     /**
-     * 是否归档（0未归档，1已归档）
+     * 印章类型（1-物理章，2-电子章）
      */
-    private Integer isArchived;
+    private Integer sealType;
 }

@@ -1,10 +1,7 @@
 package com.sealflow.model.vo;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Data
 @Schema(description = "印章信息列表对象")
@@ -19,8 +16,8 @@ public class SealInfoVO {
     @Schema(description = "印章名称")
     private String name;
 
-    @Schema(description = "所属分类")
-    private String category;
+    @Schema(description = "所属分类（1-院章，2-党章）")
+    private Integer category;
 
     @Schema(description = "印章描述")
     private String description;
@@ -34,17 +31,6 @@ public class SealInfoVO {
     @Schema(description = "状态（0-停用，1-启用）")
     private Integer status;
 
-    @Schema(description = "创建人ID")
-    private Long createBy;
-
-    @Schema(description = "创建时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createTime;
-
-    @Schema(description = "更新人ID")
-    private Long updateBy;
-
-    @Schema(description = "更新时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime updateTime;
+    @Schema(description = "印章类型（1-物理章，2-电子章）")
+    private Integer sealType;
 }

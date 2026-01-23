@@ -9,19 +9,15 @@ import lombok.EqualsAndHashCode;
 @Data
 @Schema(description = "查询印章信息对象")
 public class SealInfoPageQuery extends BasePageQuery {
-
-    @Schema(description = "印章编码")
-    private String code;
-
     @Schema(description = "印章名称")
     private String name;
 
-    @Schema(description = "所属分类")
-    private String category;
-
-    @Schema(description = "存放位置")
-    private String storageLocation;
+    @Schema(description = "所属分类（1-院章，2-党章）")
+    private Integer category;
 
     @Schema(description = "状态（0-停用，1-启用）")
     private Integer status;
+
+    @Schema(description = "印章类型（1-物理章，2-电子章）")
+    private Integer sealType;
 }
