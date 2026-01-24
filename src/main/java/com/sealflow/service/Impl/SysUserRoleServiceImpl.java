@@ -49,4 +49,14 @@ public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
                 .map(SysUserRole::getRoleId)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Long> getUserIdsByRoleId(Long roleId) {
+        // 获取角色的用户ID列表
+        return this.list(new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getRoleId, roleId))
+                .stream()
+                .map(SysUserRole::getUserId)
+                .collect(Collectors.toList());
+    }
 }

@@ -111,4 +111,7 @@ public class SealApplyVO {
 
     @Schema(description = "是否可以审批")
     private Boolean canApprove;
+
+    @Schema(description = "流程节点列表")
+    private List<WorkflowNodeVO> processNodes;
 }

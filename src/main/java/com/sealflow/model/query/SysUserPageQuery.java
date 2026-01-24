@@ -20,4 +20,7 @@ public class SysUserPageQuery extends BasePageQuery {
 
     @Schema(description = "状态，1-正常，0-禁用")
     private Integer status;
+
+    @Schema(description = "角色ID")
+    private Long roleId;
 }

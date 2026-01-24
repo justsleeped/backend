@@ -168,6 +168,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		qw.like(StringUtils.isNotBlank(queryParams.getRealName()), SysUser::getRealName, queryParams.getRealName());
 		qw.eq(queryParams.getGender() != null, SysUser::getGender, queryParams.getGender());
 		qw.eq(queryParams.getStatus() != null, SysUser::getStatus, queryParams.getStatus());
+		if (queryParams.getRoleId() != null) {
+			List<Long> userIds = sysUserRoleService.getUserIdsByRoleId(queryParams.getRoleId());
+			if (userIds != null && !userIds.isEmpty()) {
+				qw.in(SysUser::getId, userIds);
+			} else {
+				qw.eq(SysUser::getId, -1);
+			}
+		}
 		qw.orderByDesc(SysUser::getCreateTime);
 		return qw;
 	}

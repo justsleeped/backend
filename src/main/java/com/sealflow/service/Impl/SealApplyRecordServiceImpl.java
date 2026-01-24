@@ -126,18 +126,13 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
         if (approvalStage == null) {
             return "";
         }
-        switch (approvalStage) {
-            case 1:
-                return "一级审批";
-            case 2:
-                return "二级审批";
-            case 3:
-                return "三级审批";
-            case 4:
-                return "四级审批";
-            default:
-                return "";
-        }
+		return switch (approvalStage) {
+			case 1 -> "一级审批";
+			case 2 -> "二级审批";
+			case 3 -> "三级审批";
+			case 4 -> "四级审批";
+			default -> "";
+		};
     }
 
     private String getApproveResultName(Integer approveResult) {

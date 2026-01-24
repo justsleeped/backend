@@ -97,24 +97,6 @@ public interface ISealApplyService extends IService<SealApply> {
     IPage<SealApplyVO> pageMyStarted(SealApplyPageQuery queryParams, Long userId);
 
     /**
-     * 分页查询我已审批的印章申请
-     *
-     * @param queryParams 查询参数
-     * @param userId      用户ID
-     * @return 分页结果
-     */
-    IPage<SealApplyVO> pageMyApproved(SealApplyPageQuery queryParams, Long userId);
-
-    /**
-     * 分页查询待我审批的任务
-     *
-     * @param queryParams 查询参数
-     * @param userId      用户ID
-     * @return 分页结果
-     */
-    IPage<SealApplyVO> pageTodoTasks(SealApplyPageQuery queryParams, Long userId);
-
-    /**
      * 获取流程详情
      *
      * @param processInstanceId 流程实例ID

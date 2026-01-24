@@ -28,6 +28,9 @@ public class SealApplyForm {
     @Schema(description = "紧急程度（1-普通，2-紧急，3-特急）")
     private Integer urgencyLevel;
 
+    @Schema(description = "流程模板ID")
+    private Long templateId;
+
     @Schema(description = "附件URL")
     private String attachmentUrl;
 }

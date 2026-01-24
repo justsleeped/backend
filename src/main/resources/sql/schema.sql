@@ -116,6 +116,7 @@ CREATE TABLE IF NOT EXISTS seal_apply
     apply_date             DATE         NOT NULL COMMENT '申请日期',
     expected_use_date      DATETIME     COMMENT '预计使用时间',
     urgency_level          TINYINT      DEFAULT 1 COMMENT '紧急程度（1-普通，2-紧急，3-特急）',
+    template_id            BIGINT       COMMENT '流程模板ID',
     process_instance_id    VARCHAR(64)  COMMENT '流程实例ID',
     process_definition_key VARCHAR(64)  COMMENT '流程定义Key',
     process_name           VARCHAR(128) COMMENT '流程名称',
@@ -166,13 +167,12 @@ CREATE TABLE IF NOT EXISTS workflow_template
 (
     id                     BIGINT PRIMARY KEY COMMENT '主键ID',
     name                   VARCHAR(128) NOT NULL COMMENT '模板名称',
-    type                   INT          NOT NULL COMMENT '申请类型（1-用章申请，2-印章申请，3-其他）',
     description            TEXT COMMENT '模板描述',
     process_key            VARCHAR(64)  NOT NULL UNIQUE COMMENT 'Flowable流程定义Key',
     bpmn_xml               LONGTEXT     NOT NULL COMMENT 'BPMN XML内容',
     deployed               TINYINT      DEFAULT 0 COMMENT '是否已部署（0-否，1-是）',
     process_definition_id  VARCHAR(64) COMMENT 'Flowable流程定义ID',
-    allowed_initiators     TEXT COMMENT '允许发起的用户ID列表（JSON数组）',
+    allowed_roles          TEXT COMMENT '允许发起的角色ID列表（JSON数组）',
     status                 TINYINT      DEFAULT 1 COMMENT '状态（0-禁用，1-启用）',
     create_by              BIGINT       DEFAULT 0,
     create_time            DATETIME     DEFAULT CURRENT_TIMESTAMP,
@@ -181,25 +181,3 @@ CREATE TABLE IF NOT EXISTS workflow_template
     deleted                TINYINT      DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）'
 ) COMMENT = '工作流模板表';
 
--- 模板节点配置表
-CREATE TABLE IF NOT EXISTS workflow_template_node
-(
-    id          BIGINT PRIMARY KEY COMMENT '主键ID',
-    template_id BIGINT       NOT NULL COMMENT '模板ID',
-    node_id     VARCHAR(64)  NOT NULL COMMENT 'BPMN节点ID',
-    node_name   VARCHAR(128) COMMENT '节点名称',
-    node_type   VARCHAR(32)  DEFAULT 'userTask' COMMENT '节点类型',
-    node_order  INT          DEFAULT 0 COMMENT '节点顺序',
-    role_id     BIGINT COMMENT '审批角色ID',
-    role_code   VARCHAR(64) COMMENT '审批角色编码',
-    role_name   VARCHAR(64) COMMENT '审批角色名称',
-    user_id     BIGINT COMMENT '指定审批人ID（可选，为空则角色下所有用户可审批）',
-    user_name   VARCHAR(64) COMMENT '指定审批人姓名',
-    create_by   BIGINT       DEFAULT 0,
-    create_time DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    update_by   BIGINT       DEFAULT 0,
-    update_time DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted     TINYINT      DEFAULT 0 COMMENT '逻辑删除（0未删除，1已删除）',
-    INDEX idx_template_id (template_id),
-    INDEX idx_node_id (node_id)
-) COMMENT = '工作流模板节点配置表';

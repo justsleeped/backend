@@ -12,26 +12,25 @@ import com.sealflow.common.context.UserContextHolder;
 import com.sealflow.converter.SealApplyConverter;
 import com.sealflow.mapper.SealApplyMapper;
 import com.sealflow.model.entity.SealApply;
-import com.sealflow.model.entity.SealApplyRecord;
 import com.sealflow.model.entity.SealInfo;
+import com.sealflow.model.entity.WorkflowTemplate;
 import com.sealflow.model.form.SealApplyForm;
 import com.sealflow.model.query.SealApplyPageQuery;
-import com.sealflow.model.vo.SealApplyVO;
 import com.sealflow.model.vo.SealApplyRecordVO;
+import com.sealflow.model.vo.SealApplyVO;
 import com.sealflow.model.vo.SysUserVO;
-import com.sealflow.service.ISealApplyRecordService;
-import com.sealflow.service.ISealApplyService;
-import com.sealflow.service.ISysUserRoleService;
-
+import com.sealflow.model.vo.WorkflowNodeVO;
+import com.sealflow.service.*;
 import lombok.RequiredArgsConstructor;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.bpmn.model.FlowElement;
+import org.flowable.bpmn.model.UserTask;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
-import org.flowable.engine.RuntimeService;
-import org.flowable.engine.TaskService;
-import org.flowable.engine.repository.ProcessDefinition;
-import org.flowable.engine.runtime.ProcessInstance;
-import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
+import org.flowable.task.api.Task;
+import org.flowable.engine.runtime.ProcessInstance;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,16 +44,74 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply> implements ISealApplyService {
 
+    /**
+     * 实体与表单/VO之间的转换器
+     */
     private final SealApplyConverter converter;
-    private final ISealApplyRecordService approvalRecordService;
-    private final RuntimeService runtimeService;
-    private final TaskService taskService;
-    private final HistoryService historyService;
-    private final RepositoryService repositoryService;
-    private final com.sealflow.service.ISysUserService sysUserService;
-    private final ISysUserRoleService sysUserRoleService;
-    private final com.sealflow.service.ISealInfoService sealInfoService;
 
+    /**
+     * 印章申请审批记录服务
+     * 用于保存审批过程中的审批记录
+     */
+    private final ISealApplyRecordService approvalRecordService;
+
+    /**
+     * Flowable工作流服务
+     * 用于启动流程、处理任务、撤销流程等Flowable相关操作
+     */
+    private final IFlowableService flowableService;
+
+    /**
+     * Flowable历史服务
+     * 用于查询已完成的任务、历史流程实例等
+     */
+    private final HistoryService historyService;
+
+    /**
+     * Flowable流程定义存储服务
+     * 用于查询流程定义、获取BPMN模型等
+     */
+    private final RepositoryService repositoryService;
+
+    /**
+     * 系统用户服务
+     * 用于获取用户信息
+     */
+    private final ISysUserService sysUserService;
+
+    /**
+     * 系统用户角色服务
+     * 用于获取用户的角色信息
+     */
+    private final ISysUserRoleService sysUserRoleService;
+
+    /**
+     * 印章信息管理服务
+     * 用于获取印章相关信息
+     */
+    private final ISealInfoService sealInfoService;
+
+    /**
+     * 工作流模板服务
+     * 用于根据条件匹配工作流模板
+     */
+    private final com.sealflow.service.IWorkflowTemplateService workflowTemplateService;
+
+    /**
+     * 保存印章申请并启动审批流程
+     *
+     * 保存印章申请信息后，自动根据印章类型匹配工作流模板并启动审批流程。
+     *
+     * 处理流程：
+     * 1. 将表单数据转换为实体
+     * 2. 生成申请编号、设置初始状态
+     * 3. 设置申请人信息
+     * 4. 保存申请信息
+     * 5. 调用startProcess()启动审批流程
+     *
+     * @param formData 申请表单数据
+     * @return 新创建的申请ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveSealApply(SealApplyForm formData) {
@@ -82,6 +139,8 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
             }
         }
 
+        entity.setTemplateId(formData.getTemplateId());
+
         Assert.isTrue(this.save(entity), "添加失败");
 
         startProcess(entity.getId());
@@ -89,6 +148,14 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         return entity.getId();
     }
 
+    /**
+     * 更新印章申请
+     *
+     * 只有待审批的申请才能修改，审批中或已完成的申请不能修改。
+     *
+     * @param id 申请ID
+     * @param formData 更新后的申请数据
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateSealApply(Long id, SealApplyForm formData) {
@@ -98,7 +165,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         entity.setId(id);
 
         if (formData.getSealId() != null) {
-            com.sealflow.model.entity.SealInfo sealInfo = sealInfoService.getById(formData.getSealId());
+            SealInfo sealInfo = sealInfoService.getById(formData.getSealId());
             if (sealInfo != null) {
                 entity.setSealName(sealInfo.getName());
                 entity.setSealCategory(sealInfo.getCategory());
@@ -110,12 +177,20 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
             entity.setApplyDate(LocalDate.parse(formData.getApplyDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
         if (StrUtil.isNotBlank(formData.getExpectedUseDate())) {
-            entity.setExpectedUseDate(LocalDateTime.parse(formData.getExpectedUseDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            entity.setExpectedUseDate(LocalDateTime.parse(formData.getExpectedUseDate(),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
 
         Assert.isTrue(this.updateById(entity), "修改失败");
     }
 
+    /**
+     * 删除印章申请
+     *
+     * 批量删除申请，标记为删除状态而非物理删除。
+     *
+     * @param idStr 申请ID字符串，多个用逗号分隔
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteSealApply(String idStr) {
@@ -129,6 +204,12 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         Assert.isTrue(this.update(wrapper), "删除失败");
     }
 
+    /**
+     * 获取印章申请详情
+     *
+     * @param id 申请ID
+     * @return 申请详情VO
+     */
     @Override
     public SealApplyVO getSealApplyVo(Long id) {
         SealApply entity = getEntity(id);
@@ -137,6 +218,12 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         return vo;
     }
 
+    /**
+     * 分页查询印章申请
+     *
+     * @param queryParams 查询参数
+     * @return 分页结果
+     */
     @Override
     public IPage<SealApplyVO> pageSealApply(SealApplyPageQuery queryParams) {
         Page<SealApply> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
@@ -146,6 +233,12 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         return resultPage;
     }
 
+    /**
+     * 查询印章申请列表
+     *
+     * @param queryParams 查询参数
+     * @return 申请列表
+     */
     @Override
     public List<SealApplyVO> listSealApply(SealApplyPageQuery queryParams) {
         List<SealApplyVO> list = converter.entityToVo(this.list(getQueryWrapper(queryParams)));
@@ -153,11 +246,43 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         return list;
     }
 
+    /**
+     * 启动审批流程
+     *
+     * 根据申请信息匹配工作流模板，并将模板部署到Flowable引擎后启动流程实例。
+     *
+     * 处理流程：
+     * 1. 验证申请状态为待审批
+     * 2. 根据印章类型和申请人匹配工作流模板
+     * 3. 验证模板已部署
+     * 4. 验证用户是否有权限发起该工作流
+     * 5. 构建流程变量（包含申请人信息、申请ID等）
+     * 6. 调用IFlowableService启动流程实例
+     * 7. 更新申请的流程实例ID和状态
+     *
+     * @param applyId 申请ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void startProcess(Long applyId) {
         SealApply sealApply = getEntity(applyId);
         Assert.isTrue(sealApply.getStatus() == 0, "只有待审批的申请才能发起流程");
+
+        WorkflowTemplate template;
+        if (sealApply.getTemplateId() != null) {
+            template = workflowTemplateService.getById(sealApply.getTemplateId());
+        } else {
+            template = workflowTemplateService.findMatchedTemplate(sealApply.getApplicantId());
+        }
+
+        Assert.notNull(template, "未找到匹配的工作流模板，请联系管理员配置");
+        Assert.isTrue(template.getDeployed() == 1, "工作流模板未部署，请联系管理员");
+
+        Assert.isTrue(workflowTemplateService.hasInitiatePermission(template.getId(), sealApply.getApplicantId()),
+                "您没有权限发起该工作流，请联系管理员");
+
+        Assert.isTrue(!workflowTemplateService.isTemplateSuspended(template.getId()),
+                "该工作流模板已挂起，暂时无法发起");
 
         Map<String, Object> variables = new HashMap<>();
         variables.put("applicantId", sealApply.getApplicantId());
@@ -166,27 +291,46 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         variables.put("sealCategory", sealApply.getSealCategory());
         variables.put("sealType", sealApply.getSealType());
 
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("sealApplyProcess", sealApply.getApplyNo(), variables);
+        ProcessInstance processInstance = flowableService.startProcessInstanceByKey(
+                template.getProcessKey(), sealApply.getApplyNo(), variables);
 
         sealApply.setProcessInstanceId(processInstance.getId());
         sealApply.setProcessDefinitionKey(processInstance.getProcessDefinitionKey());
         sealApply.setStatus(1);
 
-        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
-                .processDefinitionId(processInstance.getProcessDefinitionId())
-                .singleResult();
-        if (processDefinition != null) {
-            sealApply.setProcessName(processDefinition.getName());
+        String processDefinitionId = processInstance.getProcessDefinitionId();
+        if (StrUtil.isNotBlank(processDefinitionId)) {
+            String processName = flowableService.getProcessDefinitionName(processDefinitionId);
+            if (StrUtil.isNotBlank(processName)) {
+                sealApply.setProcessName(processName);
+            }
         }
 
         updateCurrentTaskInfo(sealApply);
         Assert.isTrue(this.updateById(sealApply), "更新申请状态失败");
     }
 
+    /**
+     * 审批任务
+     *
+     * 处理待办任务，记录审批结果，并推进流程。
+     *
+     * 处理流程：
+     * 1. 验证任务存在
+     * 2. 验证申请存在
+     * 3. 保存审批记录
+     * 4. 调用IFlowableService完成任务
+     * 5. 检查流程是否结束，更新申请状态
+     *
+     * @param taskId 任务ID
+     * @param approveResult 审批结果（1-通过，0-拒绝）
+     * @param approveComment 审批意见
+     * @param approverId 审批人ID
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approveTask(String taskId, Integer approveResult, String approveComment, Long approverId) {
-        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        Task task = flowableService.getTaskById(taskId);
         Assert.notNull(task, "任务不存在");
 
         SealApply sealApply = this.getOne(new LambdaQueryWrapper<SealApply>()
@@ -204,8 +348,9 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         HistoricTaskInstance historicTask = historyService.createHistoricTaskInstanceQuery()
                 .taskId(taskId)
                 .singleResult();
-        LocalDateTime taskStartTime = historicTask != null ?
-                historicTask.getCreateTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : LocalDateTime.now();
+        LocalDateTime taskStartTime = historicTask != null
+                ? historicTask.getCreateTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
+                : LocalDateTime.now();
 
         approvalRecordService.saveApprovalRecord(
                 sealApply.getId(),
@@ -219,14 +364,12 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
                 approverRoleCode,
                 getApproverRoleName(approverRoleCode),
                 approveResult,
-                approveComment
-        );
+                approveComment);
 
-        taskService.complete(taskId, variables);
+        flowableService.completeTask(taskId, variables);
 
-        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(sealApply.getProcessInstanceId())
-                .singleResult();
+        String processInstanceId = sealApply.getProcessInstanceId();
+        ProcessInstance processInstance = flowableService.getRuntimeProcessInstance(processInstanceId);
 
         if (processInstance == null) {
             sealApply.setStatus(approveResult == 1 ? 2 : 3);
@@ -245,6 +388,14 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         Assert.isTrue(this.updateById(sealApply), "更新申请状态失败");
     }
 
+    /**
+     * 撤销审批流程
+     *
+     * 申请人可以撤销自己发起的、尚在审批中的申请。
+     *
+     * @param applyId 申请ID
+     * @param userId 用户ID（用于验证是否为申请人）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void revokeProcess(Long applyId, Long userId) {
@@ -252,7 +403,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         Assert.isTrue(sealApply.getApplicantId().equals(userId), "只有申请人才能撤销");
         Assert.isTrue(sealApply.getStatus() == 1, "只有审批中的申请才能撤销");
 
-        runtimeService.deleteProcessInstance(sealApply.getProcessInstanceId(), "申请人撤销");
+        flowableService.deleteProcessInstance(sealApply.getProcessInstanceId(), "申请人撤销");
 
         sealApply.setStatus(4);
         sealApply.setCurrentNodeName(null);
@@ -262,85 +413,27 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         Assert.isTrue(this.updateById(sealApply), "撤销失败");
     }
 
+    /**
+     * 分页查询我发起的申请
+     *
+     * @param queryParams 查询参数
+     * @param userId 用户ID
+     * @return 分页结果
+     */
     @Override
     public IPage<SealApplyVO> pageMyStarted(SealApplyPageQuery queryParams, Long userId) {
         queryParams.setApplicantId(userId);
         return pageSealApply(queryParams);
     }
 
-    @Override
-    public IPage<SealApplyVO> pageMyApproved(SealApplyPageQuery queryParams, Long userId) {
-        List<SealApplyRecord> approvalRecords = approvalRecordService.list(
-                new LambdaQueryWrapper<SealApplyRecord>()
-                        .eq(SealApplyRecord::getApproverId, userId)
-        );
-
-        if (approvalRecords.isEmpty()) {
-            return new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        }
-
-        Set<Long> approvedApplyIds = approvalRecords.stream()
-                .map(SealApplyRecord::getApplyId)
-                .collect(Collectors.toSet());
-
-        Page<SealApply> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        LambdaQueryWrapper<SealApply> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SealApply::getDeleted, 0);
-        wrapper.in(SealApply::getId, approvedApplyIds);
-        wrapper.orderByDesc(SealApply::getApplyTime);
-
-        Page<SealApply> sealApplyPage = this.baseMapper.selectPage(page, wrapper);
-        IPage<SealApplyVO> resultPage = converter.entityToVOForPage(sealApplyPage);
-        resultPage.getRecords().forEach(this::enrichSealApplyVO);
-        return resultPage;
-    }
-
-    @Override
-    public IPage<SealApplyVO> pageTodoTasks(SealApplyPageQuery queryParams, Long userId) {
-        Long currentUserId = userId != null ? userId : UserContextHolder.getCurrentUserId();
-
-        Set<String> processInstanceIds = new HashSet<>();
-
-        List<Task> assignedTasks = taskService.createTaskQuery()
-                .taskAssignee(currentUserId.toString())
-                .list();
-        processInstanceIds.addAll(assignedTasks.stream()
-                .map(Task::getProcessInstanceId)
-                .collect(Collectors.toList()));
-
-        List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(currentUserId);
-        if (roleIds != null && !roleIds.isEmpty()) {
-            List<com.sealflow.model.vo.SysRoleVO> roles = sysUserService.getSysUserVo(currentUserId).getRoles();
-            if (roles != null && !roles.isEmpty()) {
-                List<String> roleCodes = roles.stream()
-                        .map(com.sealflow.model.vo.SysRoleVO::getCode)
-                        .collect(Collectors.toList());
-
-                List<Task> candidateTasks = taskService.createTaskQuery()
-                        .taskCandidateGroupIn(roleCodes)
-                        .list();
-                processInstanceIds.addAll(candidateTasks.stream()
-                        .map(Task::getProcessInstanceId)
-                        .collect(Collectors.toList()));
-            }
-        }
-
-        if (processInstanceIds.isEmpty()) {
-            return new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        }
-
-        Page<SealApply> page = new Page<>(queryParams.getPageNum(), queryParams.getPageSize());
-        LambdaQueryWrapper<SealApply> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(SealApply::getDeleted, 0);
-        wrapper.in(SealApply::getProcessInstanceId, processInstanceIds);
-        wrapper.orderByDesc(SealApply::getApplyTime);
-
-        Page<SealApply> sealApplyPage = this.baseMapper.selectPage(page, wrapper);
-        IPage<SealApplyVO> resultPage = converter.entityToVOForPage(sealApplyPage);
-        resultPage.getRecords().forEach(this::enrichSealApplyVO);
-        return resultPage;
-    }
-
+    /**
+     * 获取流程详情
+     *
+     * 获取申请对应的流程详情，包括流程节点信息和各节点的审批状态。
+     *
+     * @param processInstanceId 流程实例ID
+     * @return 包含流程节点信息的申请VO
+     */
     @Override
     public SealApplyVO getProcessDetail(String processInstanceId) {
         SealApply sealApply = this.getOne(new LambdaQueryWrapper<SealApply>()
@@ -348,103 +441,159 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         Assert.notNull(sealApply, "申请不存在");
         SealApplyVO vo = converter.entityToVo(sealApply);
         enrichSealApplyVO(vo);
+
+        String processDefinitionId = flowableService.getProcessDefinitionIdByInstanceId(processInstanceId);
+
+        if (StrUtil.isNotBlank(processDefinitionId)) {
+            BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
+            List<WorkflowNodeVO> nodes = new ArrayList<>();
+
+            List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .orderByHistoricTaskInstanceEndTime().asc()
+                    .list();
+
+            List<Task> activeTasks = flowableService.getTasksByProcessInstanceId(processInstanceId);
+            Set<String> activeTaskDefKeys = activeTasks.stream()
+                    .map(Task::getTaskDefinitionKey).collect(Collectors.toSet());
+
+            Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
+            for (FlowElement element : flowElements) {
+                if (element instanceof UserTask) {
+                    UserTask userTask = (UserTask) element;
+                    WorkflowNodeVO nodeVO = new WorkflowNodeVO();
+                    nodeVO.setNodeId(userTask.getId());
+                    nodeVO.setNodeName(userTask.getName());
+
+                    HistoricTaskInstance hti = historicTasks.stream()
+                            .filter(h -> h.getTaskDefinitionKey().equals(userTask.getId()) && h.getEndTime() != null)
+                            .findFirst().orElse(null);
+
+                    if (hti != null) {
+                        nodeVO.setStatus(2);
+                        nodeVO.setApproverName(
+                                getApproverName(Long.parseLong(hti.getAssignee() != null ? hti.getAssignee() : "0")));
+                        nodeVO.setFinishTime(LocalDateTime.ofInstant(hti.getEndTime().toInstant(),
+                                java.time.ZoneId.systemDefault()));
+                    } else if (activeTaskDefKeys.contains(userTask.getId())) {
+                        nodeVO.setStatus(1);
+                    } else {
+                        nodeVO.setStatus(0);
+                    }
+
+                    List<String> groups = userTask.getCandidateGroups();
+                    if (groups != null && !groups.isEmpty()) {
+                        nodeVO.setRoleName(getApproverRoleName(groups.get(0)));
+                    }
+
+                    nodes.add(nodeVO);
+                }
+            }
+            vo.setProcessNodes(nodes);
+        }
+
         return vo;
     }
 
+    /**
+     * 更新当前任务信息
+     *
+     * 查询流程实例的当前待办任务，更新申请表的当前节点信息。
+     *
+     * @param sealApply 申请实体
+     */
     private void updateCurrentTaskInfo(SealApply sealApply) {
-        Task currentTask = taskService.createTaskQuery()
-                .processInstanceId(sealApply.getProcessInstanceId())
-                .singleResult();
-        if (currentTask != null) {
+        String processInstanceId = sealApply.getProcessInstanceId();
+        List<Task> tasks = flowableService.getTasksByProcessInstanceId(processInstanceId);
+        if (tasks != null && !tasks.isEmpty()) {
+            Task currentTask = tasks.get(0);
             sealApply.setCurrentNodeName(currentTask.getName());
             sealApply.setCurrentNodeKey(currentTask.getTaskDefinitionKey());
-            if (currentTask.getAssignee() != null) {
-                try {
-                    Long approverId = Long.parseLong(currentTask.getAssignee());
-                    sealApply.setCurrentApproverId(approverId);
-                    sealApply.setCurrentApproverName(getApproverName(approverId));
-                } catch (NumberFormatException e) {
-                    sealApply.setCurrentApproverName(currentTask.getAssignee());
-                }
-            }
+            sealApply.setCurrentApproverId(Long.parseLong(currentTask.getAssignee()));
+            sealApply.setCurrentApproverName(getApproverName(Long.parseLong(currentTask.getAssignee())));
         }
     }
 
+    /**
+     * 根据ID获取申请实体
+     *
+     * @param id 申请ID
+     * @return 申请实体
+     */
+    private SealApply getEntity(Long id) {
+        SealApply entity = this.getOne(new LambdaQueryWrapper<SealApply>()
+                .eq(SealApply::getId, id)
+                .eq(SealApply::getDeleted, 0));
+        Assert.notNull(entity, "申请不存在");
+        return entity;
+    }
+
+    /**
+     * 构建查询条件
+     *
+     * @param queryParams 查询参数
+     * @return 查询条件包装器
+     */
+    private LambdaQueryWrapper<SealApply> getQueryWrapper(SealApplyPageQuery queryParams) {
+        LambdaQueryWrapper<SealApply> qw = new LambdaQueryWrapper<>();
+        qw.eq(SealApply::getDeleted, 0);
+        qw.like(StrUtil.isNotBlank(queryParams.getSealName()), SealApply::getSealName, queryParams.getSealName());
+        qw.eq(queryParams.getSealCategory() != null, SealApply::getSealCategory, queryParams.getSealCategory());
+        qw.eq(queryParams.getStatus() != null, SealApply::getStatus, queryParams.getStatus());
+        qw.eq(queryParams.getApplicantId() != null, SealApply::getApplicantId, queryParams.getApplicantId());
+        qw.orderByDesc(SealApply::getApplyTime);
+        return qw;
+    }
+
+    /**
+     * 补充申请VO的关联信息
+     *
+     * @param vo 申请VO对象
+     */
     private void enrichSealApplyVO(SealApplyVO vo) {
         vo.setSealCategoryName(getSealCategoryName(vo.getSealCategory()));
         vo.setSealTypeName(getSealTypeName(vo.getSealType()));
         vo.setUrgencyLevelName(getUrgencyLevelName(vo.getUrgencyLevel()));
         vo.setStatusName(getStatusName(vo.getStatus()));
 
-        List<SealApplyRecordVO> approvalRecords = approvalRecordService.getApprovalRecordsByApplyId(vo.getId());
-        vo.setApprovalRecords(approvalRecords);
-
-        if (vo.getProcessInstanceId() != null) {
-            Task currentTask = taskService.createTaskQuery()
-                    .processInstanceId(vo.getProcessInstanceId())
-                    .singleResult();
-            if (currentTask != null) {
-                vo.setCurrentTaskId(currentTask.getId());
-            }
+        if (vo.getId() != null) {
+            List<SealApplyRecordVO> approvalRecords = approvalRecordService.getApprovalRecordsByApplyId(vo.getId());
+            vo.setApprovalRecords(approvalRecords);
         }
     }
 
-    private LambdaQueryWrapper<SealApply> getQueryWrapper(SealApplyPageQuery queryParams) {
-        LambdaQueryWrapper<SealApply> qw = new LambdaQueryWrapper<>();
-        qw.eq(SealApply::getDeleted, 0);
-        qw.like(StrUtil.isNotBlank(queryParams.getApplyNo()), SealApply::getApplyNo, queryParams.getApplyNo());
-        qw.eq(queryParams.getApplicantId() != null, SealApply::getApplicantId, queryParams.getApplicantId());
-        qw.like(StrUtil.isNotBlank(queryParams.getApplicantName()), SealApply::getApplicantName, queryParams.getApplicantName());
-        qw.like(StrUtil.isNotBlank(queryParams.getApplicantNo()), SealApply::getApplicantNo, queryParams.getApplicantNo());
-        qw.eq(queryParams.getSealId() != null, SealApply::getSealId, queryParams.getSealId());
-        qw.like(StrUtil.isNotBlank(queryParams.getSealName()), SealApply::getSealName, queryParams.getSealName());
-        qw.eq(queryParams.getSealCategory() != null, SealApply::getSealCategory, queryParams.getSealCategory());
-        qw.eq(queryParams.getSealType() != null, SealApply::getSealType, queryParams.getSealType());
-        qw.eq(queryParams.getUrgencyLevel() != null, SealApply::getUrgencyLevel, queryParams.getUrgencyLevel());
-        qw.eq(queryParams.getStatus() != null, SealApply::getStatus, queryParams.getStatus());
-        qw.orderByDesc(SealApply::getApplyTime);
-        return qw;
-    }
-
-    private SealApply getEntity(Long id) {
-        SealApply entity = this.getOne(new LambdaQueryWrapper<SealApply>()
-                .eq(SealApply::getId, id)
-                .eq(SealApply::getDeleted, 0)
-        );
-        Assert.isTrue(null != entity, "数据不存在");
-        return entity;
-    }
-
-    private Integer getApprovalStage(String taskKey) {
-        switch (taskKey) {
-            case "headTeacherApproval":
-                return 1;
-            case "counselorApproval":
-                return 2;
-            case "deanApproval":
-                return 3;
-            case "partySecretaryApproval":
-                return 4;
-            default:
-                return 0;
-        }
-    }
-
+    /**
+     * 根据任务Key获取审批人角色代码
+     *
+     * @param taskKey 任务定义Key
+     * @return 角色代码
+     */
     private String getApproverRoleCode(String taskKey) {
-        switch (taskKey) {
-            case "headTeacherApproval":
-                return "CLASSGUIDE";
-            case "counselorApproval":
-                return "MENTOR";
-            case "deanApproval":
-                return "DEAN";
-            case "partySecretaryApproval":
-                return "PARTYSECRETARY";
-            default:
-                return "";
+        if (StrUtil.isBlank(taskKey)) {
+            return "";
         }
+        return taskKey;
     }
 
+    /**
+     * 根据任务Key获取审批阶段
+     *
+     * @param taskKey 任务定义Key
+     * @return 审批阶段
+     */
+    private Integer getApprovalStage(String taskKey) {
+        if (StrUtil.isBlank(taskKey)) {
+            return 0;
+        }
+        return 1;
+    }
+
+    /**
+     * 获取角色名称
+     *
+     * @param roleCode 角色代码
+     * @return 角色名称
+     */
     private String getApproverRoleName(String roleCode) {
         return switch (roleCode) {
             case "CLASSGUIDE" -> "班主任";
@@ -455,6 +604,12 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         };
     }
 
+    /**
+     * 获取审批人名称
+     *
+     * @param approverId 审批人ID
+     * @return 审批人名称
+     */
     private String getApproverName(Long approverId) {
         if (approverId == null) {
             return "";
@@ -467,8 +622,15 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         }
     }
 
+    /**
+     * 获取印章类别名称
+     *
+     * @param sealCategory 印章类别代码
+     * @return 印章类别名称
+     */
     private String getSealCategoryName(Integer sealCategory) {
-        if (sealCategory == null) return "";
+        if (sealCategory == null)
+            return "";
         return switch (sealCategory) {
             case 1 -> "院章";
             case 2 -> "党章";
@@ -476,8 +638,15 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         };
     }
 
+    /**
+     * 获取印章类型名称
+     *
+     * @param sealType 印章类型代码
+     * @return 印章类型名称
+     */
     private String getSealTypeName(Integer sealType) {
-        if (sealType == null) return "";
+        if (sealType == null)
+            return "";
         return switch (sealType) {
             case 1 -> "物理章";
             case 2 -> "电子章";
@@ -485,8 +654,15 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         };
     }
 
+    /**
+     * 获取紧急程度名称
+     *
+     * @param urgencyLevel 紧急程度代码
+     * @return 紧急程度名称
+     */
     private String getUrgencyLevelName(Integer urgencyLevel) {
-        if (urgencyLevel == null) return "";
+        if (urgencyLevel == null)
+            return "";
         return switch (urgencyLevel) {
             case 1 -> "普通";
             case 2 -> "紧急";
@@ -495,8 +671,15 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         };
     }
 
+    /**
+     * 获取申请状态名称
+     *
+     * @param status 状态代码
+     * @return 状态名称
+     */
     private String getStatusName(Integer status) {
-        if (status == null) return "";
+        if (status == null)
+            return "";
         return switch (status) {
             case 0 -> "待审批";
             case 1 -> "审批中";
