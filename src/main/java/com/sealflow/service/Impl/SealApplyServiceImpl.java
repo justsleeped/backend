@@ -556,6 +556,13 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         vo.setUrgencyLevelName(getUrgencyLevelName(vo.getUrgencyLevel()));
         vo.setStatusName(getStatusName(vo.getStatus()));
 
+        if (vo.getSealId() != null) {
+            SealInfo sealInfo = sealInfoService.getById(vo.getSealId());
+            if (sealInfo != null) {
+                vo.setSealImageUrl(sealInfo.getImageUrl());
+            }
+        }
+
         if (vo.getId() != null) {
             List<SealApplyRecordVO> approvalRecords = approvalRecordService.getApprovalRecordsByApplyId(vo.getId());
             vo.setApprovalRecords(approvalRecords);

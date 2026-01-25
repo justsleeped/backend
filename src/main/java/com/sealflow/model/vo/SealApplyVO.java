@@ -45,6 +45,9 @@ public class SealApplyVO {
     @Schema(description = "印章类型名称")
     private String sealTypeName;
 
+    @Schema(description = "印章图片URL")
+    private String sealImageUrl;
+
     @Schema(description = "申请事由")
     private String applyReason;
 
@@ -102,6 +105,9 @@ public class SealApplyVO {
 
     @Schema(description = "附件URL")
     private String attachmentUrl;
+
+    @Schema(description = "PDF文件URL")
+    private String pdfUrl;
 
     @Schema(description = "审批记录列表")
     private List<SealApplyRecordVO> approvalRecords;
