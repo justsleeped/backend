@@ -2,6 +2,7 @@ package com.sealflow.controller;
 
 import com.sealflow.common.Result.PageResult;
 import com.sealflow.common.Result.Result;
+import com.sealflow.common.enums.HttpStatusCode;
 import com.sealflow.model.form.SealInfoForm;
 import com.sealflow.model.query.SealInfoPageQuery;
 import com.sealflow.model.vo.SealInfoVO;
@@ -12,9 +13,18 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +33,49 @@ import java.util.List;
 public class SealInfoController {
 
     private final ISealInfoService service;
+
+    @Value("${file.upload.path:uploads/seal-images}")
+    private String uploadPath;
+
+    @Value("${file.upload.url-prefix:/api/uploads}")
+    private String urlPrefix;
+
+    @Operation(summary = "上传印章图片")
+    @PostMapping("/upload")
+    public Result<String> uploadSealImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return Result.error(HttpStatusCode.BAD_REQUEST.getStatus(), "请选择要上传的文件");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        
+        if (!fileExtension.equalsIgnoreCase(".jpg") && 
+            !fileExtension.equalsIgnoreCase(".jpeg") && 
+            !fileExtension.equalsIgnoreCase(".png") && 
+            !fileExtension.equalsIgnoreCase(".gif")) {
+            return Result.error(HttpStatusCode.BAD_REQUEST.getStatus(), "只支持上传jpg、jpeg、png、gif格式的图片");
+        }
+
+        try {
+            String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
+            String fileName = UUID.randomUUID().toString() + fileExtension;
+            String relativePath = datePath + "/" + fileName;
+            
+            Path uploadDir = Paths.get(uploadPath, datePath);
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+            
+            Path filePath = uploadDir.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath);
+            
+            String fileUrl = urlPrefix + "/" + relativePath;
+            return Result.success(fileUrl);
+        } catch (IOException e) {
+            return Result.error(HttpStatusCode.INTERNAL_SERVER_ERROR.getStatus(), "文件上传失败: " + e.getMessage());
+        }
+    }
 
     @Operation(summary = "新增")
     @PostMapping(value = "/add")

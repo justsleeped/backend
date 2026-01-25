@@ -25,9 +25,6 @@ public class SealInfoVO {
     @Schema(description = "印章图片URL")
     private String imageUrl;
 
-    @Schema(description = "存放位置")
-    private String storageLocation;
-
     @Schema(description = "状态（0-停用，1-启用）")
     private Integer status;
 

@@ -34,11 +34,6 @@ public class SealInfo extends BaseEntity<Long> {
     private String imageUrl;
 
     /**
-     * 存放位置
-     */
-    private String storageLocation;
-
-    /**
      * 状态（0-停用，1-启用）
      */
     private Integer status;

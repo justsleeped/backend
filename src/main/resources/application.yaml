@@ -34,6 +34,18 @@ spring:
             password: redis  # 访问Redis所需密码
             database: 0  # 使用的数据库编号
 
+    # 文件上传配置
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 10MB
+
+# 文件上传路径配置
+file:
+    upload:
+        path: uploads/seal-images
+        url-prefix: /api/uploads
+
 # Flowable工作流引擎配置
 flowable:
     database-schema-update: true # 开启数据库自动建表

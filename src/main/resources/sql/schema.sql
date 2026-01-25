@@ -89,7 +89,6 @@ CREATE TABLE IF NOT EXISTS seal_info
     category         TINYINT  DEFAULT 1 COMMENT '印章分类（1-院章，2-党章）',
     description      TEXT COMMENT '印章描述',
     image_url        VARCHAR(500) COMMENT '印章图片URL',
-    storage_location VARCHAR(200) COMMENT '存放位置',
     seal_type        TINYINT  DEFAULT 1 COMMENT '印章类型（1-物理章，2-电子章）',
     status           TINYINT  DEFAULT 1 COMMENT '状态（0-停用，1-启用）',
     create_by        BIGINT   DEFAULT 0,
