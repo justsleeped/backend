@@ -33,13 +33,11 @@ import java.util.stream.Collectors;
 
 /**
  * 审批任务管理服务实现类
- * 
  * 该类专门负责审批任务相关的操作，包括：
  * - 待办任务查询
  * - 已办任务查询
  * - 审批操作（同意/拒绝）
  * - 任务详情查询
- * 
  * 职责说明：
  * - 不直接操作业务数据，通过ISealApplyService和ISealApplyRecordService完成
  * - 通过IFlowableService与Flowable引擎交互
@@ -86,9 +84,9 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 分页查询待办任务
-     * 
+     *
      * 查询分配给当前用户的任务以及用户所属角色候选的任务。
-     * 
+     *
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果
@@ -100,7 +98,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         List<Task> assignedTasks = flowableService.getTasksByAssignee(userId.toString());
         processInstanceIds.addAll(assignedTasks.stream()
                 .map(Task::getProcessInstanceId)
-                .collect(Collectors.toList()));
+                .toList());
 
         List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
         if (roleIds != null && !roleIds.isEmpty()) {
@@ -113,7 +111,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
                 List<Task> candidateTasks = flowableService.getTasksByCandidateGroups(roleCodes);
                 processInstanceIds.addAll(candidateTasks.stream()
                         .map(Task::getProcessInstanceId)
-                        .collect(Collectors.toList()));
+                        .toList());
             }
         }
 
@@ -160,9 +158,9 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 分页查询已办任务
-     * 
+     *
      * 查询当前用户已经审批过的所有任务。
-     * 
+     *
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果
@@ -209,7 +207,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 获取待办任务数量
-     * 
+     *
      * @param userId 用户ID
      * @return 待办任务数量
      */
@@ -220,7 +218,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         List<Task> assignedTasks = flowableService.getTasksByAssignee(userId.toString());
         processInstanceIds.addAll(assignedTasks.stream()
                 .map(Task::getProcessInstanceId)
-                .collect(Collectors.toList()));
+                .toList());
 
         List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
         if (roleIds != null && !roleIds.isEmpty()) {
@@ -233,7 +231,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
                 List<Task> candidateTasks = flowableService.getTasksByCandidateGroups(roleCodes);
                 processInstanceIds.addAll(candidateTasks.stream()
                         .map(Task::getProcessInstanceId)
-                        .collect(Collectors.toList()));
+                        .toList());
             }
         }
 
@@ -241,17 +239,15 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
             return 0L;
         }
 
-        long count = sealApplyService.count(
+		return sealApplyService.count(
                 new LambdaQueryWrapper<SealApply>()
                         .in(SealApply::getProcessInstanceId, processInstanceIds)
                         .eq(SealApply::getDeleted, 0));
-
-        return count;
     }
 
     /**
      * 获取任务详情
-     * 
+     *
      * @param taskId 任务ID
      * @return 任务详情VO
      */
@@ -271,7 +267,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 审批任务（同意）
-     * 
+     *
      * @param taskId 任务ID
      * @param approveComment 审批意见
      * @param approverId 审批人ID
@@ -284,7 +280,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 审批任务（拒绝）
-     * 
+     *
      * @param taskId 任务ID
      * @param rejectReason 拒绝原因
      * @param approverId 审批人ID
@@ -297,7 +293,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 获取任务的申请详情
-     * 
+     *
      * @param taskId 任务ID
      * @return 申请详情VO
      */
@@ -317,7 +313,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 验证用户是否有权限处理该任务
-     * 
+     *
      * @param taskId 任务ID
      * @param userId 用户ID
      * @return 是否有权限
@@ -352,7 +348,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 将Flowable任务转换为待办任务VO
-     * 
+     *
      * @param task Flowable任务对象
      * @param sealApply 印章申请实体
      * @param taskStatus 任务状态（1-待办，2-已办）
@@ -412,7 +408,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 将审批记录转换为已办任务VO
-     * 
+     *
      * @param record 审批记录
      * @param sealApply 印章申请实体
      * @return 任务VO
@@ -467,7 +463,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 匹配查询参数
-     * 
+     *
      * @param vo 任务VO
      * @param queryParams 查询参数
      * @return 是否匹配
@@ -524,7 +520,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 获取印章类别名称
-     * 
+     *
      * @param sealCategory 印章类别代码
      * @return 印章类别名称
      */
@@ -540,7 +536,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 获取印章类型名称
-     * 
+     *
      * @param sealType 印章类型代码
      * @return 印章类型名称
      */
@@ -556,7 +552,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 获取申请状态名称
-     * 
+     *
      * @param status 状态代码
      * @return 状态名称
      */

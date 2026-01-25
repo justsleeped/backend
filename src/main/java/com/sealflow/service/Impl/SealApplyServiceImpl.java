@@ -410,6 +410,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         sealApply.setCurrentNodeKey(null);
         sealApply.setCurrentApproverId(null);
         sealApply.setCurrentApproverName(null);
+        sealApply.setFinishTime(LocalDateTime.now());
         Assert.isTrue(this.updateById(sealApply), "撤销失败");
     }
 
@@ -459,10 +460,9 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
             Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
             for (FlowElement element : flowElements) {
-                if (element instanceof UserTask) {
-                    UserTask userTask = (UserTask) element;
-                    WorkflowNodeVO nodeVO = new WorkflowNodeVO();
-                    nodeVO.setNodeId(userTask.getId());
+                if (element instanceof UserTask userTask) {
+					WorkflowNodeVO nodeVO = new WorkflowNodeVO();
+                    nodeVO.setId(userTask.getId());
                     nodeVO.setNodeName(userTask.getName());
 
                     HistoricTaskInstance hti = historicTasks.stream()
@@ -559,7 +559,117 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         if (vo.getId() != null) {
             List<SealApplyRecordVO> approvalRecords = approvalRecordService.getApprovalRecordsByApplyId(vo.getId());
             vo.setApprovalRecords(approvalRecords);
+            vo.setProcessNodes(buildProcessNodes(vo, approvalRecords));
         }
+    }
+
+    private List<WorkflowNodeVO> buildProcessNodes(SealApplyVO vo, List<SealApplyRecordVO> approvalRecords) {
+        List<WorkflowNodeVO> nodes = new ArrayList<>();
+
+        nodes.add(WorkflowNodeVO.builder()
+                .id("start")
+                .type("start")
+                .nodeName("发起申请")
+                .status(2)
+                .approverName(vo.getApplicantName())
+                .roleName("申请人")
+                .finishTime(vo.getApplyTime())
+                .build());
+
+        if (StrUtil.isNotBlank(vo.getProcessInstanceId())) {
+            String processDefinitionId = flowableService.getProcessDefinitionIdByInstanceId(vo.getProcessInstanceId());
+
+            if (StrUtil.isNotBlank(processDefinitionId)) {
+                BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
+
+                if (bpmnModel != null) {
+                    List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
+                            .processInstanceId(vo.getProcessInstanceId())
+                            .orderByHistoricTaskInstanceEndTime().asc()
+                            .list();
+
+                    List<Task> activeTasks = flowableService.getTasksByProcessInstanceId(vo.getProcessInstanceId());
+                    Set<String> activeTaskDefKeys = activeTasks.stream()
+                            .map(Task::getTaskDefinitionKey).collect(Collectors.toSet());
+
+                    Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
+
+                    for (FlowElement element : flowElements) {
+                        if (element instanceof UserTask userTask) {
+							WorkflowNodeVO nodeVO = new WorkflowNodeVO();
+                            nodeVO.setId(userTask.getId());
+                            nodeVO.setType("approve");
+                            nodeVO.setNodeName(userTask.getName());
+
+                            HistoricTaskInstance hti = historicTasks.stream()
+                                    .filter(h -> h.getTaskDefinitionKey().equals(userTask.getId()) && h.getEndTime() != null)
+                                    .findFirst().orElse(null);
+
+                            SealApplyRecordVO record = approvalRecords.stream()
+                                    .filter(r -> r.getTaskKey() != null && r.getTaskKey().equals(userTask.getId()))
+                                    .findFirst().orElse(null);
+
+                            if (record != null) {
+                                nodeVO.setStatus(2);
+                                nodeVO.setApproverName(
+                                        getApproverName(Long.parseLong(record.getApproverId() != null ? record.getApproverId().toString() : "0")));
+                                nodeVO.setFinishTime(record.getApproveTime());
+                                nodeVO.setComment(record.getApproveComment());
+                                nodeVO.setApproveResult(record.getApproveResult());
+                            } else if (activeTaskDefKeys.contains(userTask.getId())) {
+                                nodeVO.setStatus(1);
+                            } else {
+                                nodeVO.setStatus(0);
+                            }
+
+                            List<String> groups = userTask.getCandidateGroups();
+                            if (groups != null && !groups.isEmpty()) {
+                                nodeVO.setRoleName(getApproverRoleName(groups.get(0)));
+                            }
+
+                            nodes.add(nodeVO);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (vo.getStatus() == 2) {
+            nodes.add(WorkflowNodeVO.builder()
+                    .id("end")
+                    .type("end")
+                    .nodeName("流程结束")
+                    .status(2)
+                    .finishTime(vo.getFinishTime())
+                    .build());
+        } else if (vo.getStatus() == 3) {
+            nodes.add(WorkflowNodeVO.builder()
+                    .id("end")
+                    .type("end")
+                    .nodeName("流程结束")
+                    .status(3)
+                    .finishTime(vo.getFinishTime())
+                    .build());
+        } else if (vo.getStatus() == 4) {
+            nodes.add(WorkflowNodeVO.builder()
+                    .id("revoke")
+                    .type("revoke")
+                    .nodeName("流程撤销")
+                    .status(3)
+                    .approverName(vo.getApplicantName())
+                    .roleName("申请人")
+                    .finishTime(vo.getFinishTime())
+                    .build());
+            nodes.add(WorkflowNodeVO.builder()
+                    .id("end")
+                    .type("end")
+                    .nodeName("流程结束")
+                    .status(3)
+                    .finishTime(vo.getFinishTime())
+                    .build());
+        }
+
+        return nodes;
     }
 
     /**

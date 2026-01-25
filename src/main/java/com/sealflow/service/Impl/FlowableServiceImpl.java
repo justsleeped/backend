@@ -11,6 +11,8 @@ import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.task.api.Task;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FlowableServiceImpl implements IFlowableService {
 
+    private static final Logger log = LoggerFactory.getLogger(FlowableServiceImpl.class);
     /**
      * 流程定义存储服务
      * 用于查询流程定义、部署流程等操作
@@ -74,6 +77,7 @@ public class FlowableServiceImpl implements IFlowableService {
      */
     @Override
     public Deployment deployProcess(String processName, String processKey, String bpmnXml) {
+        log.info("Deploying process: {}", processName);
         return repositoryService.createDeployment()
                 .name(processName)
                 .addInputStream(processKey + ".bpmn20.xml",
@@ -187,6 +191,7 @@ public class FlowableServiceImpl implements IFlowableService {
      * 根据流程实例ID获取流程定义ID
      *
      * 通过流程实例查询其所属的流程定义ID。
+     * 先查询运行中的流程实例，如果不存在则查询历史流程实例。
      *
      * @param processInstanceId 流程实例ID
      * @return 流程定义ID，如果未找到则返回null
@@ -196,7 +201,16 @@ public class FlowableServiceImpl implements IFlowableService {
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .singleResult();
-        return processInstance != null ? processInstance.getProcessDefinitionId() : null;
+
+        if (processInstance != null) {
+            return processInstance.getProcessDefinitionId();
+        }
+
+        org.flowable.engine.history.HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+
+        return historicProcessInstance != null ? historicProcessInstance.getProcessDefinitionId() : null;
     }
 
     /**

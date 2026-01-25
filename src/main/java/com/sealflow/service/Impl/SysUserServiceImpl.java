@@ -158,7 +158,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	public List<String> getRole(Long userId) {
 		List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
 		List<SysRoleVO> roleList = sysRoleService.listByRoleIds(roleIds);
-		return roleList.stream().map(SysRoleVO::getName).collect(Collectors.toList());
+		return roleList.stream().map(SysRoleVO::getCode).collect(Collectors.toList());
 	}
 
 	private LambdaQueryWrapper<SysUser> getQueryWrapper(SysUserPageQuery queryParams) {

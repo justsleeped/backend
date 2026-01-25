@@ -16,7 +16,10 @@ import java.time.LocalDateTime;
 public class WorkflowNodeVO {
 
     @Schema(description = "节点ID")
-    private String nodeId;
+    private String id;
+
+    @Schema(description = "节点类型（start-开始节点，approve-审批节点，end-结束节点）")
+    private String type;
 
     @Schema(description = "节点名称")
     private String nodeName;
@@ -35,4 +38,7 @@ public class WorkflowNodeVO {
 
     @Schema(description = "审批角色")
     private String roleName;
+
+    @Schema(description = "审批结果（1-通过，0-拒绝）")
+    private Integer approveResult;
 }

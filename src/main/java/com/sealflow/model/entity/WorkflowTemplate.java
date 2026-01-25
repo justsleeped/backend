@@ -8,7 +8,6 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("workflow_template")
 @Schema(description = "工作流模板表")
 public class WorkflowTemplate extends BaseEntity<Long> {
 
