@@ -73,11 +73,6 @@ public class PdfStampServiceImpl implements IPdfStampService {
         String sealImagePath = convertUrlToPath(formData.getSealImageUrl());
 
         PDDocument document = PDDocument.load(new File(pdfPath));
-        PDPage page = document.getPage(0);
-        PDRectangle pageSize = page.getMediaBox();
-
-        float pageWidth = pageSize.getWidth();
-        float pageHeight = pageSize.getHeight();
 
         BufferedImage sealImage;
         if (sealImagePath.startsWith("http://") || sealImagePath.startsWith("https://")) {
@@ -91,24 +86,45 @@ public class PdfStampServiceImpl implements IPdfStampService {
         PDImageXObject pdImage = PDImageXObject.createFromByteArray(document,
             toByteArray(sealImage), "seal");
 
-        try (PDPageContentStream contentStream = new PDPageContentStream(document, page,
-                PDPageContentStream.AppendMode.APPEND, true, true)) {
+        if (formData.getStamps() != null && !formData.getStamps().isEmpty()) {
+            for (SealStampForm.StampInfo stampInfo : formData.getStamps()) {
+                int pageIndex = stampInfo.getPageIndex() != null ? stampInfo.getPageIndex() : 0;
+                if (pageIndex < 0 || pageIndex >= document.getNumberOfPages()) {
+                    continue;
+                }
 
-            if (formData.getStamps() != null && !formData.getStamps().isEmpty()) {
-                for (SealStampForm.StampInfo stampInfo : formData.getStamps()) {
-                    float width = (stampInfo.getWidth() != null ? stampInfo.getWidth() : 15) / 100 * pageWidth;
-                    float pdfHeight = width / imageAspectRatio;
-                    float x = (stampInfo.getX() != null ? stampInfo.getX() : 80) / 100 * pageWidth;
-                    float y = (stampInfo.getY() != null ? stampInfo.getY() : 80) / 100 * pageHeight;
-					float pdfY = pageHeight - y - pdfHeight;
+                PDPage page = document.getPage(pageIndex);
+                PDRectangle pageSize = page.getMediaBox();
+
+                float pageWidth = pageSize.getWidth();
+                float pageHeight = pageSize.getHeight();
+
+                float width = (stampInfo.getWidth() != null ? stampInfo.getWidth() : 15) / 100 * pageWidth;
+                float pdfHeight = width / imageAspectRatio;
+                float x = (stampInfo.getX() != null ? stampInfo.getX() : 80) / 100 * pageWidth;
+                float y = (stampInfo.getY() != null ? stampInfo.getY() : 80) / 100 * pageHeight;
+                float pdfY = pageHeight - y - pdfHeight;
+
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, page,
+                        PDPageContentStream.AppendMode.APPEND, true, true)) {
                     contentStream.drawImage(pdImage, x, pdfY, width, pdfHeight);
                 }
-            } else {
-                float width = (formData.getWidth() != null ? formData.getWidth() : 15) / 100 * pageWidth;
-                float pdfHeight = width / imageAspectRatio;
-                float x = (formData.getX() != null ? formData.getX() : 80) / 100 * pageWidth;
-                float y = (formData.getY() != null ? formData.getY() : 80) / 100 * pageHeight;
-				float pdfY = pageHeight - y - pdfHeight;
+            }
+        } else {
+            PDPage page = document.getPage(0);
+            PDRectangle pageSize = page.getMediaBox();
+
+            float pageWidth = pageSize.getWidth();
+            float pageHeight = pageSize.getHeight();
+
+            float width = (formData.getWidth() != null ? formData.getWidth() : 15) / 100 * pageWidth;
+            float pdfHeight = width / imageAspectRatio;
+            float x = (formData.getX() != null ? formData.getX() : 80) / 100 * pageWidth;
+            float y = (formData.getY() != null ? formData.getY() : 80) / 100 * pageHeight;
+            float pdfY = pageHeight - y - pdfHeight;
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page,
+                    PDPageContentStream.AppendMode.APPEND, true, true)) {
                 contentStream.drawImage(pdImage, x, pdfY, width, pdfHeight);
             }
         }

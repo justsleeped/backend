@@ -9,6 +9,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sealflow.common.context.UserContextHolder;
+import com.sealflow.common.enums.ApproverRole;
+import com.sealflow.common.enums.ApplyStatus;
+import com.sealflow.common.enums.SealCategory;
+import com.sealflow.common.enums.SealType;
+import com.sealflow.common.enums.UrgencyLevel;
 import com.sealflow.converter.SealApplyConverter;
 import com.sealflow.mapper.SealApplyMapper;
 import com.sealflow.model.entity.SealApply;
@@ -362,7 +367,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
                 approverId,
                 getApproverName(approverId),
                 approverRoleCode,
-                getApproverRoleName(approverRoleCode),
+                ApproverRole.getNameByCode(approverRoleCode),
                 approveResult,
                 approveComment);
 
@@ -483,7 +488,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
                     List<String> groups = userTask.getCandidateGroups();
                     if (groups != null && !groups.isEmpty()) {
-                        nodeVO.setRoleName(getApproverRoleName(groups.get(0)));
+                        nodeVO.setRoleName(ApproverRole.getNameByCode(groups.get(0)));
                     }
 
                     nodes.add(nodeVO);
@@ -551,10 +556,10 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
      * @param vo 申请VO对象
      */
     private void enrichSealApplyVO(SealApplyVO vo) {
-        vo.setSealCategoryName(getSealCategoryName(vo.getSealCategory()));
-        vo.setSealTypeName(getSealTypeName(vo.getSealType()));
-        vo.setUrgencyLevelName(getUrgencyLevelName(vo.getUrgencyLevel()));
-        vo.setStatusName(getStatusName(vo.getStatus()));
+        vo.setSealCategoryName(SealCategory.getNameByCode(vo.getSealCategory()));
+        vo.setSealTypeName(SealType.getNameByCode(vo.getSealType()));
+        vo.setUrgencyLevelName(UrgencyLevel.getNameByCode(vo.getUrgencyLevel()));
+        vo.setStatusName(ApplyStatus.getNameByCode(vo.getStatus()));
 
         if (vo.getSealId() != null) {
             SealInfo sealInfo = sealInfoService.getById(vo.getSealId());
@@ -631,7 +636,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
                             List<String> groups = userTask.getCandidateGroups();
                             if (groups != null && !groups.isEmpty()) {
-                                nodeVO.setRoleName(getApproverRoleName(groups.get(0)));
+                                nodeVO.setRoleName(ApproverRole.getNameByCode(groups.get(0)));
                             }
 
                             nodes.add(nodeVO);
@@ -706,22 +711,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
     }
 
     /**
-     * 获取角色名称
-     *
-     * @param roleCode 角色代码
-     * @return 角色名称
-     */
-    private String getApproverRoleName(String roleCode) {
-        return switch (roleCode) {
-            case "CLASSGUIDE" -> "班主任";
-            case "MENTOR" -> "辅导员";
-            case "DEAN" -> "学院院长";
-            case "PARTYSECRETARY" -> "党委书记";
-            default -> "";
-        };
-    }
-
-    /**
      * 获取审批人名称
      *
      * @param approverId 审批人ID
@@ -737,73 +726,5 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         } catch (Exception e) {
             return "审批人" + approverId;
         }
-    }
-
-    /**
-     * 获取印章类别名称
-     *
-     * @param sealCategory 印章类别代码
-     * @return 印章类别名称
-     */
-    private String getSealCategoryName(Integer sealCategory) {
-        if (sealCategory == null)
-            return "";
-        return switch (sealCategory) {
-            case 1 -> "院章";
-            case 2 -> "党章";
-            default -> "";
-        };
-    }
-
-    /**
-     * 获取印章类型名称
-     *
-     * @param sealType 印章类型代码
-     * @return 印章类型名称
-     */
-    private String getSealTypeName(Integer sealType) {
-        if (sealType == null)
-            return "";
-        return switch (sealType) {
-            case 1 -> "物理章";
-            case 2 -> "电子章";
-            default -> "";
-        };
-    }
-
-    /**
-     * 获取紧急程度名称
-     *
-     * @param urgencyLevel 紧急程度代码
-     * @return 紧急程度名称
-     */
-    private String getUrgencyLevelName(Integer urgencyLevel) {
-        if (urgencyLevel == null)
-            return "";
-        return switch (urgencyLevel) {
-            case 1 -> "普通";
-            case 2 -> "紧急";
-            case 3 -> "特急";
-            default -> "";
-        };
-    }
-
-    /**
-     * 获取申请状态名称
-     *
-     * @param status 状态代码
-     * @return 状态名称
-     */
-    private String getStatusName(Integer status) {
-        if (status == null)
-            return "";
-        return switch (status) {
-            case 0 -> "待审批";
-            case 1 -> "审批中";
-            case 2 -> "已通过";
-            case 3 -> "已拒绝";
-            case 4 -> "已撤销";
-            default -> "";
-        };
     }
 }

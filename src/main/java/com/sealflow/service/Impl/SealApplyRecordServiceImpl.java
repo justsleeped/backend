@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sealflow.common.enums.ApprovalStage;
+import com.sealflow.common.enums.ApproveResult;
 import com.sealflow.converter.SealApplyConverter;
 import com.sealflow.mapper.SealApplyRecordMapper;
 import com.sealflow.model.entity.SealApplyRecord;
@@ -111,41 +113,14 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
 
     private SealApplyRecordVO enrichApprovalRecordVO(SealApplyRecord record) {
         SealApplyRecordVO vo = converter.approvalRecordToVo(record);
-        vo.setApprovalStageName(getApprovalStageName(record.getApprovalStage()));
-        vo.setApproveResultName(getApproveResultName(record.getApproveResult()));
+        vo.setApprovalStageName(ApprovalStage.getNameByCode(record.getApprovalStage()));
+        vo.setApproveResultName(ApproveResult.getNameByCode(record.getApproveResult()));
         return vo;
     }
 
     private SealApplyRecordVO enrichApprovalRecordVO2(SealApplyRecordVO vo) {
-        vo.setApprovalStageName(getApprovalStageName(vo.getApprovalStage()));
-        vo.setApproveResultName(getApproveResultName(vo.getApproveResult()));
+        vo.setApprovalStageName(ApprovalStage.getNameByCode(vo.getApprovalStage()));
+        vo.setApproveResultName(ApproveResult.getNameByCode(vo.getApproveResult()));
         return vo;
-    }
-
-    private String getApprovalStageName(Integer approvalStage) {
-        if (approvalStage == null) {
-            return "";
-        }
-		return switch (approvalStage) {
-			case 1 -> "一级审批";
-			case 2 -> "二级审批";
-			case 3 -> "三级审批";
-			case 4 -> "四级审批";
-			default -> "";
-		};
-    }
-
-    private String getApproveResultName(Integer approveResult) {
-        if (approveResult == null) {
-            return "";
-        }
-        switch (approveResult) {
-            case 1:
-                return "同意";
-            case 2:
-                return "拒绝";
-            default:
-                return "";
-        }
     }
 }

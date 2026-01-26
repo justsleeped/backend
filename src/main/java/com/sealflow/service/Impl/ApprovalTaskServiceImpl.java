@@ -5,6 +5,9 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sealflow.common.enums.ApplyStatus;
+import com.sealflow.common.enums.SealCategory;
+import com.sealflow.common.enums.SealType;
 import com.sealflow.model.entity.SealApply;
 import com.sealflow.model.entity.SealApplyRecord;
 import com.sealflow.model.query.ApprovalTaskPageQuery;
@@ -379,14 +382,14 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         vo.setSealId(sealApply.getSealId());
         vo.setSealName(sealApply.getSealName());
         vo.setSealCategory(sealApply.getSealCategory());
-        vo.setSealCategoryName(getSealCategoryName(sealApply.getSealCategory()));
+        vo.setSealCategoryName(SealCategory.getNameByCode(sealApply.getSealCategory()));
         vo.setSealType(sealApply.getSealType());
-        vo.setSealTypeName(getSealTypeName(sealApply.getSealType()));
+        vo.setSealTypeName(SealType.getNameByCode(sealApply.getSealType()));
         vo.setApplyReason(sealApply.getApplyReason());
         vo.setApplyTime(sealApply.getApplyTime());
         vo.setExpectedUseDate(sealApply.getExpectedUseDate());
         vo.setStatus(sealApply.getStatus());
-        vo.setStatusName(getStatusName(sealApply.getStatus()));
+        vo.setStatusName(ApplyStatus.getNameByCode(sealApply.getStatus()));
         vo.setCurrentNodeName(sealApply.getCurrentNodeName());
         vo.setCurrentNodeKey(sealApply.getCurrentNodeKey());
         vo.setCurrentApproverId(sealApply.getCurrentApproverId());
@@ -438,14 +441,14 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         vo.setSealId(sealApply.getSealId());
         vo.setSealName(sealApply.getSealName());
         vo.setSealCategory(sealApply.getSealCategory());
-        vo.setSealCategoryName(getSealCategoryName(sealApply.getSealCategory()));
+        vo.setSealCategoryName(SealCategory.getNameByCode(sealApply.getSealCategory()));
         vo.setSealType(sealApply.getSealType());
-        vo.setSealTypeName(getSealTypeName(sealApply.getSealType()));
+        vo.setSealTypeName(SealType.getNameByCode(sealApply.getSealType()));
         vo.setApplyReason(sealApply.getApplyReason());
         vo.setApplyTime(sealApply.getApplyTime());
         vo.setExpectedUseDate(sealApply.getExpectedUseDate());
         vo.setStatus(sealApply.getStatus());
-        vo.setStatusName(getStatusName(sealApply.getStatus()));
+        vo.setStatusName(ApplyStatus.getNameByCode(sealApply.getStatus()));
         vo.setCurrentNodeName(sealApply.getCurrentNodeName());
         vo.setCurrentNodeKey(sealApply.getCurrentNodeKey());
         vo.setCurrentApproverId(sealApply.getCurrentApproverId());
@@ -516,56 +519,5 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
             }
         }
         return true;
-    }
-
-    /**
-     * 获取印章类别名称
-     *
-     * @param sealCategory 印章类别代码
-     * @return 印章类别名称
-     */
-    private String getSealCategoryName(Integer sealCategory) {
-        if (sealCategory == null)
-            return "";
-        return switch (sealCategory) {
-            case 1 -> "院章";
-            case 2 -> "党章";
-            default -> "";
-        };
-    }
-
-    /**
-     * 获取印章类型名称
-     *
-     * @param sealType 印章类型代码
-     * @return 印章类型名称
-     */
-    private String getSealTypeName(Integer sealType) {
-        if (sealType == null)
-            return "";
-        return switch (sealType) {
-            case 1 -> "物理章";
-            case 2 -> "电子章";
-            default -> "";
-        };
-    }
-
-    /**
-     * 获取申请状态名称
-     *
-     * @param status 状态代码
-     * @return 状态名称
-     */
-    private String getStatusName(Integer status) {
-        if (status == null)
-            return "";
-        return switch (status) {
-            case 0 -> "待审批";
-            case 1 -> "审批中";
-            case 2 -> "已通过";
-            case 3 -> "已拒绝";
-            case 4 -> "已撤销";
-            default -> "";
-        };
     }
 }

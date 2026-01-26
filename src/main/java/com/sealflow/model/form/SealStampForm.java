@@ -33,6 +33,9 @@ public class SealStampForm {
 
     @Data
     public static class StampInfo {
+        @Schema(description = "印章所在页码（从0开始）")
+        private Integer pageIndex;
+
         @Schema(description = "印章X坐标（百分比，0-100）")
         private Float x;
 
