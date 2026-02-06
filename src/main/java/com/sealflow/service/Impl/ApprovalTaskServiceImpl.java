@@ -76,12 +76,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
      */
     private final ISysUserRoleService sysUserRoleService;
 
-    /**
-     * Flowable历史服务
-     */
-    private final HistoryService historyService;
-
-    /**
+	/**
      * Flowable流程定义存储服务
      */
     private final RepositoryService repositoryService;
@@ -97,12 +92,11 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
      */
     @Override
     public IPage<ApprovalTaskVO> pageTodoTasks(ApprovalTaskPageQuery queryParams, Long userId) {
-        Set<String> processInstanceIds = new HashSet<>();
 
-        List<Task> assignedTasks = flowableService.getTasksByAssignee(userId.toString());
-        processInstanceIds.addAll(assignedTasks.stream()
-                .map(Task::getProcessInstanceId)
-                .toList());
+		List<Task> assignedTasks = flowableService.getTasksByAssignee(userId.toString());
+		Set<String> processInstanceIds = new HashSet<>(assignedTasks.stream()
+				.map(Task::getProcessInstanceId)
+				.toList());
 
         List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
         if (roleIds != null && !roleIds.isEmpty()) {
@@ -131,8 +125,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         Map<String, SealApply> applyMap = sealApplies.stream()
                 .collect(Collectors.toMap(SealApply::getProcessInstanceId, apply -> apply));
 
-        List<Task> allTasks = new ArrayList<>();
-        allTasks.addAll(assignedTasks);
+		List<Task> allTasks = new ArrayList<>(assignedTasks);
         if (roleIds != null && !roleIds.isEmpty()) {
             SysUserVO userVO = sysUserService.getSysUserVo(userId);
             if (userVO != null && userVO.getRoles() != null && !userVO.getRoles().isEmpty()) {
@@ -217,12 +210,11 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
      */
     @Override
     public Long getTodoTaskCount(Long userId) {
-        Set<String> processInstanceIds = new HashSet<>();
 
-        List<Task> assignedTasks = flowableService.getTasksByAssignee(userId.toString());
-        processInstanceIds.addAll(assignedTasks.stream()
-                .map(Task::getProcessInstanceId)
-                .toList());
+		List<Task> assignedTasks = flowableService.getTasksByAssignee(userId.toString());
+		Set<String> processInstanceIds = new HashSet<>(assignedTasks.stream()
+				.map(Task::getProcessInstanceId)
+				.toList());
 
         List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
         if (roleIds != null && !roleIds.isEmpty()) {

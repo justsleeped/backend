@@ -50,7 +50,7 @@ public class PdfStampServiceImpl implements IPdfStampService {
         }
 
         String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
-        String fileName = UUID.randomUUID().toString() + ".pdf";
+        String fileName = UUID.randomUUID() + ".pdf";
         String relativePath = "pdf/" + datePath + "/" + fileName;
 
         Path uploadDir = Paths.get(uploadPath, "pdf", datePath);

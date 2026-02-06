@@ -1,6 +1,5 @@
 package com.sealflow.model.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.sealflow.model.base.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

@@ -63,9 +63,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     private final ISysUserService sysUserService;
 
-    private final ISysUserRoleService sysUserRoleService;
-
-    private final ISealInfoService sealInfoService;
+	private final ISealInfoService sealInfoService;
 
     private final IWorkflowTemplateService workflowTemplateService;
 
@@ -363,7 +361,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
             if (approveResult != 1) {
                 sealApply.setRejectReason(approveComment);
             }
-            
+
             if (approveResult == 1) {
                 SealApprovedEvent event = new SealApprovedEvent();
                 event.setApplyId(sealApply.getId());
@@ -374,7 +372,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
                 event.setApprovedTime(LocalDateTime.now());
                 eventPublisher.publishEvent(event);
             }
-            
+
             sealApply.setCurrentNodeName(null);
             sealApply.setCurrentNodeKey(null);
             sealApply.setCurrentApproverId(null);
@@ -563,11 +561,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
                         nodeVO.setType("approve");
                         nodeVO.setNodeName(userTask.getName());
 
-                        HistoricTaskInstance hti = historicTasks.stream()
-                                .filter(h -> h.getTaskDefinitionKey().equals(userTask.getId()) && h.getEndTime() != null)
-                                .findFirst().orElse(null);
-
-                        SealApplyRecordVO record = approvalRecords.stream()
+						SealApplyRecordVO record = approvalRecords.stream()
                                 .filter(r -> r.getTaskKey() != null && r.getTaskKey().equals(userTask.getId()))
                                 .findFirst().orElse(null);
 

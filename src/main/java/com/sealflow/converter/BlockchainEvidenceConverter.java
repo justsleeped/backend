@@ -34,10 +34,10 @@ public interface BlockchainEvidenceConverter {
     @Named("verifyStatusToName")
     default String verifyStatusToName(Integer verifyStatus) {
         if (verifyStatus == null) return "未验证";
-        switch (verifyStatus) {
-            case 1: return "验证通过";
-            case 2: return "验证失败";
-            default: return "未验证";
-        }
+		return switch (verifyStatus) {
+			case 1 -> "验证通过";
+			case 2 -> "验证失败";
+			default -> "未验证";
+		};
     }
 }

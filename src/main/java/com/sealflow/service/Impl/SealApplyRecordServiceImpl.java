@@ -24,9 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,8 +33,7 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
 
     @Resource
     private SealApplyConverter converter;
-    private final TaskService taskService;
-    private final HistoryService historyService;
+	private final HistoryService historyService;
     private final IBlockchainEvidenceService blockchainEvidenceService;
 
     @Override

@@ -243,7 +243,7 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
         List<Map<String, Object>> urgencyAvgDuration = Stream.of(1, 2, 3)
                 .map(urgency -> {
                     Map<String, Object> map = new HashMap<>();
-                    String urgencyName = "";
+                    String urgencyName;
                     if (urgency == 1) urgencyName = "普通";
                     else if (urgency == 2) urgencyName = "紧急";
                     else urgencyName = "特急";

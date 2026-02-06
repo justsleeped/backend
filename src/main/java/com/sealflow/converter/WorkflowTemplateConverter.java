@@ -36,7 +36,6 @@ public interface WorkflowTemplateConverter {
     List<WorkflowTemplateVO> entityToVo(List<WorkflowTemplate> entities);
 
     default IPage<WorkflowTemplateVO> entityToVOForPage(IPage<WorkflowTemplate> page) {
-        IPage<WorkflowTemplateVO> result = page.convert(this::entityToVo);
-        return result;
+		return page.convert(this::entityToVo);
     }
 }

@@ -325,7 +325,7 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
             try {
                 List<Long> roles = JSONUtil.toList(vo.getAllowedRoles().toString(), Long.class);
                 vo.setAllowedRoles(roles);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
     }

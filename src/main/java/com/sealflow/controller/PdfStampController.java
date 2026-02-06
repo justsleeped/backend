@@ -20,9 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -86,7 +84,7 @@ public class PdfStampController {
                         applyVO != null ? applyVO.getApplicantName() : null
                 );
             }
-            
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=stamped.pdf")
                     .contentType(MediaType.APPLICATION_PDF)
