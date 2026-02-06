@@ -83,9 +83,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 分页查询待办任务
-     *
      * 查询分配给当前用户的任务以及用户所属角色候选的任务。
-     *
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果
@@ -155,9 +153,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 分页查询已办任务
-     *
      * 查询当前用户已经审批过的所有任务。
-     *
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果

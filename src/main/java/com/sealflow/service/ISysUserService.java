@@ -66,4 +66,12 @@ public interface ISysUserService extends IService<SysUser> {
      * @return List<String> 角色列表
      */
     List<String> getRole(Long userId);
+
+    /**
+     * 获取用户权限
+     *
+     * @param userId 用户ID
+     * @return List<String> 权限列表
+     */
+    List<String> getPermissions(Long userId);
 }

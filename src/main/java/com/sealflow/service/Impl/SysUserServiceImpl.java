@@ -14,6 +14,8 @@ import com.sealflow.model.query.SysUserPageQuery;
 import com.sealflow.model.vo.SysRoleVO;
 import com.sealflow.model.vo.SysUserVO;
 import com.sealflow.service.IdentitySyncService;
+import com.sealflow.service.ISysPermissionService;
+import com.sealflow.service.ISysRolePermissionService;
 import com.sealflow.service.ISysRoleService;
 import com.sealflow.service.ISysUserRoleService;
 import com.sealflow.service.ISysUserService;
@@ -33,6 +35,8 @@ import java.util.stream.Collectors;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
 	private final ISysRoleService sysRoleService;
 	private final ISysUserRoleService sysUserRoleService;
+	private final ISysRolePermissionService sysRolePermissionService;
+	private final ISysPermissionService sysPermissionService;
 	private final PasswordEncoder passwordEncoder;
 	private final IdentitySyncService identitySyncService;
 	@Resource
@@ -159,6 +163,32 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
 		List<SysRoleVO> roleList = sysRoleService.listByRoleIds(roleIds);
 		return roleList.stream().map(SysRoleVO::getCode).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<String> getPermissions(Long userId) {
+		List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
+		if (roleIds == null || roleIds.isEmpty()) {
+			return List.of();
+		}
+
+		List<Long> permissionIds = new java.util.ArrayList<>();
+		for (Long roleId : roleIds) {
+			List<Long> rolePermissionIds = sysRolePermissionService.getPermissionIdsByRoleId(roleId);
+			if (rolePermissionIds != null) {
+				permissionIds.addAll(rolePermissionIds);
+			}
+		}
+
+		if (permissionIds.isEmpty()) {
+			return List.of();
+		}
+
+		List<com.sealflow.model.vo.SysPermissionVO> permissionList = sysPermissionService.listByPermissionIds(permissionIds);
+		return permissionList.stream()
+				.map(com.sealflow.model.vo.SysPermissionVO::getCode)
+				.distinct()
+				.collect(Collectors.toList());
 	}
 
 	private LambdaQueryWrapper<SysUser> getQueryWrapper(SysUserPageQuery queryParams) {

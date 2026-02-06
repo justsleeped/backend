@@ -18,7 +18,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 成功返回带状态码、成功信息、 数据
-     *
      * @param data  数据
      * @param message  信息
      * @return  200正确的Result
@@ -32,7 +31,6 @@ public class Result<T> implements Serializable {
     }
     /**
      * 成功返回带数据
-     *
      * @param data  数据
      * @return  200正确的Result
      */
@@ -52,7 +50,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个错误的返回结果对象
-     *
      * @param statusCode 错误状态
      * @param message 错误信息
      * @return 错误的Result对象
@@ -66,7 +63,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个400错误的返回结果对象
-     *
      * @param message 错误信息
      * @param <T> 数据类型
      * @return 400错误的Result对象
@@ -77,7 +73,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个400错误的返回结果对象，使用默认错误信息
-     *
      * @param <T> 数据类型
      * @return 400错误的Result对象
      */
@@ -87,7 +82,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个404错误的返回结果对象
-     *
      * @param message 错误信息
      * @param <T> 数据类型
      * @return 404错误的Result对象
@@ -98,7 +92,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个404错误的返回结果对象，使用默认错误信息
-     *
      * @param <T> 数据类型
      * @return 404错误的Result对象
      */
@@ -108,7 +101,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个405错误的返回结果对象
-     *
      * @param message 错误信息
      * @param <T> 数据类型
      * @return 405错误的Result对象
@@ -119,7 +111,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个405错误的返回结果对象，使用默认错误信息
-     *
      * @param <T> 数据类型
      * @return 405错误的Result对象
      */
@@ -129,7 +120,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个500错误的返回结果对象
-     *
      * @param message 错误信息
      * @param <T> 数据类型
      * @return 500错误的Result对象
@@ -140,7 +130,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个500错误的返回结果对象，使用默认错误信息
-     *
      * @param <T> 数据类型
      * @return 500错误的Result对象
      */
@@ -150,7 +139,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个401错误的返回结果对象
-     *
      * @param message 错误信息
      * @param <T> 数据类型
      * @return 401错误的Result对象
@@ -161,7 +149,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个401错误的返回结果对象，使用默认错误信息
-     *
      * @param <T> 数据类型
      * @return 401错误的Result对象
      */
@@ -171,7 +158,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个403错误的返回结果对象
-     *
      * @param message 错误信息
      * @param <T> 数据类型
      * @return 403错误的Result对象
@@ -182,7 +168,6 @@ public class Result<T> implements Serializable {
 
     /**
      * 创建一个403错误的返回结果对象，使用默认错误信息
-     *
      * @param <T> 数据类型
      * @return 403错误的Result对象
      */

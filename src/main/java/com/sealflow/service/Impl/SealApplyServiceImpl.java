@@ -73,16 +73,13 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 保存印章申请并启动审批流程
-     *
      * 保存印章申请信息后，自动根据印章类型匹配工作流模板并启动审批流程。
-     *
      * 处理流程：
      * 1. 将表单数据转换为实体
      * 2. 生成申请编号、设置初始状态
      * 3. 设置申请人信息
      * 4. 保存申请信息
      * 5. 调用startProcess()启动审批流程
-     *
      * @param formData 申请表单数据
      * @return 新创建的申请ID
      */
@@ -141,9 +138,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 更新印章申请
-     *
      * 只有待审批的申请才能修改，审批中或已完成的申请不能修改。
-     *
      * @param id 申请ID
      * @param formData 更新后的申请数据
      */
@@ -177,9 +172,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 删除印章申请
-     *
      * 批量删除申请，标记为删除状态而非物理删除。
-     *
      * @param idStr 申请ID字符串，多个用逗号分隔
      */
     @Override
@@ -197,7 +190,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 获取印章申请详情
-     *
      * @param id 申请ID
      * @return 申请详情VO
      */
@@ -211,7 +203,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 分页查询印章申请
-     *
      * @param queryParams 查询参数
      * @return 分页结果
      */
@@ -226,7 +217,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 查询印章申请列表
-     *
      * @param queryParams 查询参数
      * @return 申请列表
      */
@@ -239,9 +229,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 启动审批流程
-     *
      * 根据申请信息匹配工作流模板，并将模板部署到Flowable引擎后启动流程实例。
-     *
      * 处理流程：
      * 1. 验证申请状态为待审批
      * 2. 根据印章类型和申请人匹配工作流模板

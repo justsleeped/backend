@@ -11,9 +11,6 @@ import java.util.List;
 
 /**
  * 角色表服务接口
- *
- * @author makejava
- * @date 2025-04-24
  */
 public interface ISysRoleService extends IService<SysRole> {
     /**
@@ -51,16 +48,13 @@ public interface ISysRoleService extends IService<SysRole> {
      *
      * @param queryParams 筛选条件
      * @return IPage<SysRoleVO> 分页对象
-     * @return 查询结果
      */
     IPage<SysRoleVO> pageSysRole(SysRolePageQuery queryParams);
 
     /**
      * 列表查询角色表
      *
-     * @param queryParams 筛选条件
      * @return List<SysRoleVO> 列表对象
-     * @return 查询结果
      */
     List<SysRoleVO> listSysRole();
 

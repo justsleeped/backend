@@ -15,10 +15,19 @@ import com.sealflow.model.vo.SealInfoVO;
 import com.sealflow.service.ISealInfoService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +35,12 @@ import java.util.stream.Collectors;
 public class SealInfoServiceImpl extends ServiceImpl<SealInfoMapper, SealInfo> implements ISealInfoService {
 
     private final SealInfoConverter converter;
+
+    @Value("${file.upload.path:uploads/seal-images}")
+    private String uploadPath;
+
+    @Value("${file.upload.url-prefix:/api/uploads}")
+    private String urlPrefix;
 
     /**
      * 保存印章信息
@@ -131,5 +146,48 @@ public class SealInfoServiceImpl extends ServiceImpl<SealInfoMapper, SealInfo> i
         );
         Assert.isTrue(null != entity, "数据不存在");
         return entity;
+    }
+
+    @Override
+    public String uploadSealImage(MultipartFile file) {
+        String fileExtension = getFileExtension(file);
+
+        try {
+            String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
+            String fileName = UUID.randomUUID() + fileExtension;
+            String relativePath = datePath + "/" + fileName;
+
+            Path uploadDir = Paths.get(uploadPath, datePath);
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            Path filePath = uploadDir.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath);
+
+            return urlPrefix + "/" + relativePath;
+        } catch (IOException e) {
+            throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
+        }
+    }
+
+    private static String getFileExtension(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("请选择要上传的文件");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String fileExtension = null;
+        if (originalFilename != null) {
+            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        if (fileExtension != null && !fileExtension.equalsIgnoreCase(".jpg") &&
+                !fileExtension.equalsIgnoreCase(".jpeg") &&
+                !fileExtension.equalsIgnoreCase(".png") &&
+                !fileExtension.equalsIgnoreCase(".gif")) {
+            throw new IllegalArgumentException("只支持上传jpg、jpeg、png、gif格式的图片");
+        }
+        return fileExtension;
     }
 }

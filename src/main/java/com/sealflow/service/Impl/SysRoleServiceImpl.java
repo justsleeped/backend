@@ -2,9 +2,7 @@ package com.sealflow.service.Impl;
 
 import cn.hutool.core.lang.Assert;
 import com.sealflow.converter.SysRoleConverter;
-import com.sealflow.mapper.SysPermissionMapper;
 import com.sealflow.mapper.SysRoleMapper;
-import com.sealflow.model.entity.SysPermission;
 import com.sealflow.model.entity.SysRole;
 import com.sealflow.model.form.SysRoleForm;
 import com.sealflow.model.query.SysRolePageQuery;
@@ -132,9 +130,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         IPage<SysRoleVO> resultPage = converter.entityToVOForPage(SysRolePage);
 
         // 为每个角色设置权限信息
-        resultPage.getRecords().forEach(roleVO -> {
-            setRolePermissionInfo(roleVO, roleVO.getId());
-        });
+        resultPage.getRecords().forEach(roleVO -> setRolePermissionInfo(roleVO, roleVO.getId()));
 
         return resultPage;
     }
@@ -147,9 +143,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         List<SysRoleVO> roleList = converter.entityToVo(this.list(qw));
 
         // 为每个角色设置权限信息
-        roleList.forEach(roleVO -> {
-            setRolePermissionInfo(roleVO, roleVO.getId());
-        });
+        roleList.forEach(roleVO -> setRolePermissionInfo(roleVO, roleVO.getId()));
 
         return roleList;
     }
@@ -159,9 +153,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
         List<SysRoleVO> roleList = converter.entityToVo(this.listByIds(roleIds));
 
         // 为每个角色设置权限信息
-        roleList.forEach(roleVO -> {
-            setRolePermissionInfo(roleVO, roleVO.getId());
-        });
+        roleList.forEach(roleVO -> setRolePermissionInfo(roleVO, roleVO.getId()));
 
         return roleList;
     }

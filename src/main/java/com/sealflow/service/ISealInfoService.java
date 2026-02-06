@@ -6,6 +6,7 @@ import com.sealflow.model.entity.SealInfo;
 import com.sealflow.model.form.SealInfoForm;
 import com.sealflow.model.query.SealInfoPageQuery;
 import com.sealflow.model.vo.SealInfoVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -40,4 +41,9 @@ public interface ISealInfoService extends IService<SealInfo> {
      * 列表查询印章信息
      */
     List<SealInfoVO> listSealInfo(SealInfoPageQuery queryParams);
+
+    /**
+     * 上传印章图片
+     */
+    String uploadSealImage(MultipartFile file);
 }
