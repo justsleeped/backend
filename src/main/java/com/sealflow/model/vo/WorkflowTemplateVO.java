@@ -31,8 +31,11 @@ public class WorkflowTemplateVO {
     @Schema(description = "流程定义ID")
     private String processDefinitionId;
 
-    @Schema(description = "允许发起的角色ID列表")
-    private List<Long> allowedRoles;
+    @Schema(description = "允许发起的角色ID列表（JSON数组）")
+    private String allowedRoles;
+
+    @Schema(description = "允许发起的角色名称列表")
+    private List<String> allowedRoleNames;
 
     @Schema(description = "印章分类（1-院章，2-党章）")
     private Integer sealCategory;

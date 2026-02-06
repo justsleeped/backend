@@ -75,25 +75,25 @@ public interface IWorkflowTemplateService extends IService<WorkflowTemplate> {
 
     /**
      * 挂起工作流模板
-     * 
+     *
      * 挂起后，不允许创建新的流程实例，但不影响已启动的实例。
-     * 
+     *
      * @param id 模板ID
      */
     void suspendTemplate(Long id);
 
     /**
      * 激活工作流模板
-     * 
+     *
      * 激活后，可以创建新的流程实例。
-     * 
+     *
      * @param id 模板ID
      */
     void activateTemplate(Long id);
 
     /**
      * 检查工作流模板是否已挂起
-     * 
+     *
      * @param id 模板ID
      * @return 是否已挂起
      */
@@ -101,19 +101,10 @@ public interface IWorkflowTemplateService extends IService<WorkflowTemplate> {
 
     /**
      * 验证用户是否有权限发起该工作流
-     * 
+     *
      * @param templateId 模板ID
      * @param userId 用户ID
      * @return 是否有权限
      */
     boolean hasInitiatePermission(Long templateId, Long userId);
-
-    /**
-     * 验证用户是否有权限发起指定类型的工作流
-     * 
-     * @param type 模板类型
-     * @param userId 用户ID
-     * @return 是否有权限
-     */
-    boolean hasInitiatePermissionByType(Integer type, Long userId);
 }

@@ -68,7 +68,7 @@ public class SysPermissionController {
 
     @Operation(summary = "分页列表")
     @PostMapping("/page")
-    @PreAuthorize("hasAnyAuthority('system:page', 'normal:page')")
+    @PreAuthorize("hasAnyAuthority('system:page')")
     public PageResult<SysPermissionVO> pageSysPermission(@RequestBody SysPermissionPageQuery queryParams) {
         IPage<SysPermissionVO> result = service.pageSysPermission(queryParams);
         return PageResult.success(result);

@@ -15,6 +15,7 @@ import com.sealflow.model.form.WorkflowTemplateForm;
 import com.sealflow.model.query.WorkflowTemplatePageQuery;
 import com.sealflow.model.vo.WorkflowTemplateVO;
 import com.sealflow.service.IFlowableService;
+import com.sealflow.service.ISysRoleService;
 import com.sealflow.service.ISysUserRoleService;
 import com.sealflow.service.IWorkflowTemplateService;
 import lombok.RequiredArgsConstructor;
@@ -27,49 +28,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 工作流模板服务实现类
- *
- * 该类负责管理工作流模板的完整生命周期，包括：
- * - 模板的增删改查操作
- * - 模板的部署与取消部署
- * - 模板与节点配置的管理
- * - 根据条件匹配适用的模板
- *
- * 核心流程：
- * 1. 设计阶段：创建/编辑模板，设置BPMN XML和节点配置
- * 2. 部署阶段：调用IFlowableService将模板部署到Flowable引擎
- * 3. 运行阶段：根据业务类型匹配模板，启动审批流程
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMapper, WorkflowTemplate>
         implements IWorkflowTemplateService {
 
-    /**
-     * 实体与表单/VO之间的转换器
-     */
     private final WorkflowTemplateConverter converter;
 
-    /**
-     * Flowable工作流服务
-     * 用于将模板部署到Flowable引擎
-     */
     private final IFlowableService flowableService;
 
-    /**
-     * 用户角色服务
-     * 用于查询用户的角色信息
-     */
     private final ISysUserRoleService userRoleService;
+
+    private final ISysRoleService roleService;
 
     /**
      * 保存工作流模板
-     *
-     * 新建一个工作流模板，保存基本信息、BPMN XML和节点配置。
-     * 新建的模板默认处于未部署状态(deployed=0)。
-     *
      * @param formData 模板表单数据
      * @return 新创建的模板ID
      */
@@ -96,10 +70,7 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 更新工作流模板
-     *
-     * 更新模板的基本信息、BPMN XML和节点配置。
-     * 注意：只有未部署的模板才能修改，已部署的模板需要先取消部署。
-     *
+     * 注意：只有未部署的模板才能修改
      * @param id 模板ID
      * @param formData 更新后的模板数据
      */
@@ -127,10 +98,7 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 删除工作流模板
-     *
-     * 批量删除模板，标记为删除状态而非物理删除。
-     * 限制：已部署的模板不能删除，必须先取消部署。
-     *
+     * 限制：已部署的模板不能删除
      * @param idStr 模板ID字符串，多个用逗号分隔
      */
     @Override
@@ -154,9 +122,8 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 获取工作流模板详情
-     *
      * @param id 模板ID
-     * @return 模板详情VO，包含节点配置信息
+     * @return 模板详情VO
      */
     @Override
     public WorkflowTemplateVO getWorkflowTemplateVo(Long id) {
@@ -168,7 +135,6 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 分页查询工作流模板
-     *
      * @param queryParams 分页查询参数
      * @return 分页结果
      */
@@ -182,17 +148,7 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
     }
 
     /**
-     * 部署工作流模板
-     *
-     * 将模板的BPMN XML部署到Flowable引擎中。
-     * 部署成功后，模板状态变为已部署(deployed=1)，
-     * 此时可以根据此模板启动审批流程。
-     *
-     * 部署流程：
-     * 1. 调用IFlowableService.deployProcess()将BPMN XML部署到Flowable
-     * 2. 获取流程定义ID
-     * 3. 更新模板的部署状态和流程定义ID
-     *
+     * 部署工作流模板到Flowable引擎
      * @param id 模板ID
      * @throws RuntimeException 部署失败时抛出异常
      */
@@ -243,15 +199,8 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 根据用户ID查找匹配的已部署模板
-     *
-     * 查找流程：
-     * 1. 查找所有已部署且启用的模板
-     * 2. 如果模板未设置角色限制，返回该模板
-     * 3. 如果模板设置了角色限制，检查用户角色是否在允许列表中
-     * 4. 返回第一个匹配的模板
-     *
      * @param userId 用户ID
-     * @return 匹配的模板，如果未找到返回null
+     * @return 匹配的模板，未找到返回null
      */
     @Override
     public WorkflowTemplate findMatchedTemplate(Long userId) {
@@ -278,7 +227,6 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 根据ID获取模板实体
-     *
      * @param id 模板ID
      * @return 模板实体
      */
@@ -292,7 +240,6 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 构建查询条件
-     *
      * @param queryParams 查询参数
      * @return 查询条件包装器
      */
@@ -308,7 +255,6 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 补充模板VO的关联信息
-     *
      * @param vo 模板VO对象
      */
     private void enrichVO(WorkflowTemplateVO vo) {
@@ -321,10 +267,16 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
             vo.setSuspended(false);
         }
 
-        if (vo.getAllowedRoles() != null && StrUtil.isNotBlank(vo.getAllowedRoles().toString())) {
+        if (StrUtil.isNotBlank(vo.getAllowedRoles())) {
             try {
-                List<Long> roles = JSONUtil.toList(vo.getAllowedRoles().toString(), Long.class);
-                vo.setAllowedRoles(roles);
+                List<Long> roleIds = JSONUtil.toList(vo.getAllowedRoles(), Long.class);
+                if (roleIds != null && !roleIds.isEmpty()) {
+                    List<com.sealflow.model.vo.SysRoleVO> roles = roleService.listByRoleIds(roleIds);
+                    List<String> roleNames = roles.stream()
+                            .map(com.sealflow.model.vo.SysRoleVO::getName)
+                            .collect(java.util.stream.Collectors.toList());
+                    vo.setAllowedRoleNames(roleNames);
+                }
             } catch (Exception ignored) {
             }
         }
@@ -332,9 +284,7 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 挂起工作流模板
-     *
-     * 挂起后，不允许创建新的流程实例，但不影响已启动的实例。
-     *
+     * 挂起后不允许创建新的流程实例
      * @param id 模板ID
      */
     @Override
@@ -354,9 +304,7 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 激活工作流模板
-     *
-     * 激活后，可以创建新的流程实例。
-     *
+     * 激活后可以创建新的流程实例
      * @param id 模板ID
      */
     @Override
@@ -376,7 +324,6 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 检查工作流模板是否已挂起
-     *
      * @param id 模板ID
      * @return 是否已挂起
      */
@@ -392,7 +339,6 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
 
     /**
      * 验证用户是否有权限发起该工作流
-     *
      * @param templateId 模板ID
      * @param userId 用户ID
      * @return 是否有权限
@@ -408,28 +354,5 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
         List<Long> userRoleIds = userRoleService.getRoleIdsByUserId(userId);
         List<Long> allowedRoles = JSONUtil.toList(template.getAllowedRoles(), Long.class);
         return allowedRoles.stream().anyMatch(userRoleIds::contains);
-    }
-
-    /**
-     * 验证用户是否有权限发起指定类型的工作流
-     *
-     * @param type 模板类型
-     * @param userId 用户ID
-     * @return 是否有权限
-     */
-    @Override
-    public boolean hasInitiatePermissionByType(Integer type, Long userId) {
-        List<WorkflowTemplate> templates = this.list(new LambdaQueryWrapper<WorkflowTemplate>()
-                .eq(WorkflowTemplate::getDeployed, 1)
-                .eq(WorkflowTemplate::getStatus, 1)
-                .eq(WorkflowTemplate::getDeleted, 0));
-
-        for (WorkflowTemplate template : templates) {
-            if (hasInitiatePermission(template.getId(), userId)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
