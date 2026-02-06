@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
                 .singleResult();
 
         LocalDateTime taskStartTime = historicTask != null ?
-                historicTask.getCreateTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : LocalDateTime.now();
+                historicTask.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : LocalDateTime.now();
         LocalDateTime taskEndTime = LocalDateTime.now();
 
         SealApplyRecord record = new SealApplyRecord();

@@ -153,7 +153,7 @@ public class PdfStampServiceImpl implements IPdfStampService {
 
     private byte[] toByteArray(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        javax.imageio.ImageIO.write(image, "PNG", baos);
+        ImageIO.write(image, "PNG", baos);
         return baos.toByteArray();
     }
 }

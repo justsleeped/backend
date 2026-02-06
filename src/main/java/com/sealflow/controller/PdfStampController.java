@@ -15,11 +15,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -46,14 +48,14 @@ public class PdfStampController {
 
     @Operation(summary = "盖章并下载PDF")
     @PostMapping("/download")
-    public org.springframework.http.ResponseEntity<byte[]> downloadStampedPdf(@Valid @RequestBody SealStampForm formData) {
+    public ResponseEntity<byte[]> downloadStampedPdf(@Valid @RequestBody SealStampForm formData) {
         try {
             byte[] pdfBytes = pdfStampService.stampPdf(formData);
 
             if (formData.getApplyId() != null) {
                 SealApplyVO applyVO = sealApplyService.getSealApplyVo(formData.getApplyId());
 
-                java.util.LinkedHashMap<String, Object> stampData = new java.util.LinkedHashMap<>();
+                LinkedHashMap<String, Object> stampData = new LinkedHashMap<>();
                 stampData.put("applyId", formData.getApplyId());
                 stampData.put("pdfUrl", formData.getPdfUrl());
                 stampData.put("sealImageUrl", formData.getSealImageUrl());
@@ -85,12 +87,12 @@ public class PdfStampController {
                 );
             }
             
-            return org.springframework.http.ResponseEntity.ok()
+            return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=stamped.pdf")
                     .contentType(MediaType.APPLICATION_PDF)
                     .body(pdfBytes);
         } catch (IOException e) {
-            return org.springframework.http.ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

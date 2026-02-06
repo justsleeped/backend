@@ -67,7 +67,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     private final ISealInfoService sealInfoService;
 
-    private final com.sealflow.service.IWorkflowTemplateService workflowTemplateService;
+    private final IWorkflowTemplateService workflowTemplateService;
 
     private final IBlockchainEvidenceService blockchainEvidenceService;
 

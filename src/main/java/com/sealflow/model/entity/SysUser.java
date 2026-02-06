@@ -4,6 +4,8 @@ import com.sealflow.model.base.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SysUser extends BaseEntity<Long> {
@@ -46,7 +48,7 @@ public class SysUser extends BaseEntity<Long> {
     /**
      * 生日
      */
-    private java.time.LocalDateTime birthday;
+    private LocalDateTime birthday;
 
     /**
      * 个人简介

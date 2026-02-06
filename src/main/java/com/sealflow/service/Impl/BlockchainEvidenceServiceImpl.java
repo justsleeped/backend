@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sealflow.converter.BlockchainEvidenceConverter;
 import com.sealflow.mapper.BlockchainEvidenceMapper;
@@ -31,9 +32,12 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -139,10 +143,10 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
                 .or()
                 .eq(BlockchainEvidence::getBusinessType, "APPROVAL")
                 .orderByAsc(BlockchainEvidence::getTimestamp);
-        java.util.List<BlockchainEvidence> approvalEvidenceList = list(approvalWrapper);
+        List<BlockchainEvidence> approvalEvidenceList = list(approvalWrapper);
 
         // 过滤出与当前申请相关的审批记录
-        java.util.List<BlockchainEvidence> relatedApprovalEvidence = new java.util.ArrayList<>();
+        List<BlockchainEvidence> relatedApprovalEvidence = new ArrayList<>();
         for (BlockchainEvidence evidence : approvalEvidenceList) {
             try {
                 String businessData = evidence.getBusinessData();
@@ -155,28 +159,28 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
         }
 
         // 查询与该申请相关的盖章记录
-        java.util.List<SealStampRecord> stampRecords = getSealStampRecordService().getByApplyId(businessId);
-        java.util.List<BlockchainEvidence> relatedStampEvidence = new java.util.ArrayList<>();
+        List<SealStampRecord> stampRecords = getSealStampRecordService().getByApplyId(businessId);
+        List<BlockchainEvidence> relatedStampEvidence = new ArrayList<>();
 
         for (SealStampRecord stampRecord : stampRecords) {
             LambdaQueryWrapper<BlockchainEvidence> stampWrapper = new LambdaQueryWrapper<>();
             stampWrapper.eq(BlockchainEvidence::getBusinessType, "STAMP")
                     .eq(BlockchainEvidence::getBusinessId, stampRecord.getId())
                     .orderByAsc(BlockchainEvidence::getTimestamp);
-            java.util.List<BlockchainEvidence> stampEvidenceList = list(stampWrapper);
+            List<BlockchainEvidence> stampEvidenceList = list(stampWrapper);
             relatedStampEvidence.addAll(stampEvidenceList);
         }
 
         // 合并所有相关记录
-        java.util.List<BlockchainEvidence> allEvidence = new java.util.ArrayList<>();
+        List<BlockchainEvidence> allEvidence = new ArrayList<>();
         allEvidence.addAll(evidenceList);
         allEvidence.addAll(relatedApprovalEvidence);
         allEvidence.addAll(relatedStampEvidence);
 
         // 按时间戳排序
-        allEvidence.sort(java.util.Comparator.comparing(BlockchainEvidence::getTimestamp));
+        allEvidence.sort(Comparator.comparing(BlockchainEvidence::getTimestamp));
 
-        return allEvidence.stream().map(converter::toVO).collect(java.util.stream.Collectors.toList());
+        return allEvidence.stream().map(converter::toVO).collect(Collectors.toList());
     }
 
     @Override
@@ -366,7 +370,7 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
                     String businessDataJson = evidence.getBusinessData();
 
                     // 解析存证中的业务数据
-                    com.fasterxml.jackson.databind.JsonNode businessData = objectMapper.readTree(businessDataJson);
+                    JsonNode businessData = objectMapper.readTree(businessDataJson);
                     String pdfUrl = businessData.has("pdfUrl") ? businessData.get("pdfUrl").asText() : null;
                     String sealImageUrl = businessData.has("sealImageUrl") ? businessData.get("sealImageUrl").asText() : null;
 

@@ -119,7 +119,7 @@ public class SealApplyController {
     @Operation(summary = "撤销流程")
     @PostMapping("/{id}/revoke")
     public Result<Boolean> revokeProcess(@Parameter(description = "申请单ID") @PathVariable Long id) {
-        Long currentUserId = com.sealflow.common.context.UserContextHolder.getCurrentUserId();
+        Long currentUserId = UserContextHolder.getCurrentUserId();
         service.revokeProcess(id, currentUserId);
         return Result.success();
     }

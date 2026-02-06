@@ -7,6 +7,7 @@ import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
+import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -206,7 +207,7 @@ public class FlowableServiceImpl implements IFlowableService {
             return processInstance.getProcessDefinitionId();
         }
 
-        org.flowable.engine.history.HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
+        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .singleResult();
 

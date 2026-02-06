@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -115,7 +116,7 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
                         return null;
                     })
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toList();
 
             if (!durations.isEmpty()) {
                 double avgDuration = durations.stream().mapToDouble(d -> d).average().orElse(0);
@@ -162,7 +163,7 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
         Map<Long, List<SealApplyRecord>> approverRecords = allRecords.stream()
                 .collect(Collectors.groupingBy(SealApplyRecord::getApproverId));
 
-        List<MonitorStatisticsVO.ApproverWorkload> workloads = approverRecords.entrySet().stream()
+		return approverRecords.entrySet().stream()
                 .map(entry -> {
                     MonitorStatisticsVO.ApproverWorkload workload = new MonitorStatisticsVO.ApproverWorkload();
                     workload.setApproverId(entry.getKey());
@@ -186,7 +187,7 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
                         List<Double> durations = records.stream()
                                 .filter(r -> r.getTaskStartTime() != null && r.getApproveTime() != null)
                                 .map(r -> (double) ChronoUnit.HOURS.between(r.getTaskStartTime(), r.getApproveTime()))
-                                .collect(Collectors.toList());
+                                .toList();
 
                         if (!durations.isEmpty()) {
                             workload.setAvgApprovalDuration(durations.stream().mapToDouble(d -> d).average().orElse(0));
@@ -207,8 +208,6 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
                 .sorted((w1, w2) -> Long.compare(w2.getDoneCount(), w1.getDoneCount()))
                 .limit(10)
                 .collect(Collectors.toList());
-
-        return workloads;
     }
 
     private MonitorStatisticsVO.UrgencyAnalysis getUrgencyAnalysis() {
@@ -241,13 +240,13 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
             }
         }
 
-        List<Map<String, Object>> urgencyAvgDuration = Arrays.asList(1, 2, 3).stream()
+        List<Map<String, Object>> urgencyAvgDuration = Stream.of(1, 2, 3)
                 .map(urgency -> {
                     Map<String, Object> map = new HashMap<>();
                     String urgencyName = "";
                     if (urgency == 1) urgencyName = "普通";
                     else if (urgency == 2) urgencyName = "紧急";
-                    else if (urgency == 3) urgencyName = "特急";
+                    else urgencyName = "特急";
 
                     map.put("urgencyLevel", urgency);
                     map.put("urgencyName", urgencyName);
@@ -329,7 +328,7 @@ public class MonitorStatisticsServiceImpl implements IMonitorStatisticsService {
                     .filter(r -> r.getApproveTime() != null && r.getTaskStartTime() != null)
                     .filter(r -> !r.getApproveTime().isBefore(dayStart) && r.getApproveTime().isBefore(dayEnd))
                     .map(r -> (double) ChronoUnit.HOURS.between(r.getTaskStartTime(), r.getApproveTime()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             double avgDuration = dayDurations.isEmpty() ? 0 : dayDurations.stream().mapToDouble(d -> d).average().orElse(0);
 

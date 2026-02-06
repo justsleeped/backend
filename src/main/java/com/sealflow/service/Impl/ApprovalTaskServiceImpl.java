@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -334,10 +335,10 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
         List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
         if (roleIds != null && !roleIds.isEmpty()) {
-            com.sealflow.model.vo.SysUserVO userVO = sysUserService.getSysUserVo(userId);
+            SysUserVO userVO = sysUserService.getSysUserVo(userId);
             if (userVO != null && userVO.getRoles() != null && !userVO.getRoles().isEmpty()) {
                 List<String> roleCodes = userVO.getRoles().stream()
-                        .map(com.sealflow.model.vo.SysRoleVO::getCode)
+                        .map(SysRoleVO::getCode)
                         .collect(Collectors.toList());
 
                 List<Task> candidateTasks = flowableService.getTasksByCandidateGroups(roleCodes);
@@ -370,7 +371,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         vo.setProcessInstanceId(task.getProcessInstanceId());
         vo.setProcessDefinitionId(task.getProcessDefinitionId());
         vo.setTaskCreateTime(task.getCreateTime().toInstant()
-                .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+                .atZone(ZoneId.systemDefault()).toLocalDateTime());
         vo.setTaskStatus(taskStatus);
         vo.setTaskStatusName(taskStatus == 1 ? "待办" : "已办");
 

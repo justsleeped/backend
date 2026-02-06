@@ -3,6 +3,8 @@ package com.sealflow.model.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Schema(description = "PDF盖章表单信息")
 public class SealStampForm {
@@ -29,7 +31,7 @@ public class SealStampForm {
     private Float height;
 
     @Schema(description = "印章列表")
-    private java.util.List<StampInfo> stamps;
+    private List<StampInfo> stamps;
 
     @Data
     public static class StampInfo {
