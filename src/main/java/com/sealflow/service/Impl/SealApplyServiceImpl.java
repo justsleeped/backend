@@ -27,6 +27,7 @@ import com.sealflow.model.vo.SealApplyVO;
 import com.sealflow.model.vo.SysUserVO;
 import com.sealflow.model.vo.WorkflowNodeVO;
 import com.sealflow.service.*;
+import com.sealflow.event.SealApprovedEvent;
 import lombok.RequiredArgsConstructor;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.FlowElement;
@@ -36,7 +37,7 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.flowable.task.api.Task;
 import org.flowable.engine.runtime.ProcessInstance;
-
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +70,8 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
     private final com.sealflow.service.IWorkflowTemplateService workflowTemplateService;
 
     private final IBlockchainEvidenceService blockchainEvidenceService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 保存印章申请并启动审批流程
@@ -335,13 +338,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         variables.put("approved", approveResult == 1);
         variables.put("rejectReason", approveComment);
 
-        HistoricTaskInstance historicTask = historyService.createHistoricTaskInstanceQuery()
-                .taskId(taskId)
-                .singleResult();
-        LocalDateTime taskStartTime = historicTask != null
-                ? historicTask.getCreateTime().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
-                : LocalDateTime.now();
-
         approvalRecordService.saveApprovalRecord(
                 sealApply.getId(),
                 sealApply.getProcessInstanceId(),
@@ -367,6 +363,18 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
             if (approveResult != 1) {
                 sealApply.setRejectReason(approveComment);
             }
+            
+            if (approveResult == 1) {
+                SealApprovedEvent event = new SealApprovedEvent();
+                event.setApplyId(sealApply.getId());
+                event.setSealId(sealApply.getSealId());
+                event.setSealName(sealApply.getSealName());
+                event.setSealType(sealApply.getSealType());
+                event.setProcessInstanceId(sealApply.getProcessInstanceId());
+                event.setApprovedTime(LocalDateTime.now());
+                eventPublisher.publishEvent(event);
+            }
+            
             sealApply.setCurrentNodeName(null);
             sealApply.setCurrentNodeKey(null);
             sealApply.setCurrentApproverId(null);
