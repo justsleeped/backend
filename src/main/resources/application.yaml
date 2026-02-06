@@ -43,7 +43,7 @@ spring:
 # 文件上传路径配置
 file:
     upload:
-        path: uploads/seal-images
+        path: uploads/sealflow
         url-prefix: /api/uploads
 
 # Flowable工作流引擎配置

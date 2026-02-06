@@ -85,6 +85,10 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
             entity.setAllowedRoles(JSONUtil.toJsonStr(formData.getAllowedRoles()));
         }
 
+        if (formData.getSealCategory() != null) {
+            entity.setSealCategory(formData.getSealCategory());
+        }
+
         Assert.isTrue(this.save(entity), "保存模板失败");
 
         return entity.getId();
@@ -112,6 +116,10 @@ public class WorkflowTemplateServiceImpl extends ServiceImpl<WorkflowTemplateMap
             entity.setAllowedRoles(JSONUtil.toJsonStr(formData.getAllowedRoles()));
         } else {
             entity.setAllowedRoles(null);
+        }
+
+        if (formData.getSealCategory() != null) {
+            entity.setSealCategory(formData.getSealCategory());
         }
 
         Assert.isTrue(this.updateById(entity), "更新模板失败");

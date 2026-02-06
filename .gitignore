@@ -24,6 +24,7 @@ target/
 /demo
 node_modules
 
+uploads
 
 ### NetBeans ###
 /nbproject/private/

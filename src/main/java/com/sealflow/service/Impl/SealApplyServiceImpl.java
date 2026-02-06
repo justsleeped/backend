@@ -21,6 +21,7 @@ import com.sealflow.model.entity.SealInfo;
 import com.sealflow.model.entity.WorkflowTemplate;
 import com.sealflow.model.form.SealApplyForm;
 import com.sealflow.model.query.SealApplyPageQuery;
+import com.sealflow.model.vo.ApplyEvidenceDataVO;
 import com.sealflow.model.vo.SealApplyRecordVO;
 import com.sealflow.model.vo.SealApplyVO;
 import com.sealflow.model.vo.SysUserVO;
@@ -49,58 +50,25 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply> implements ISealApplyService {
 
-    /**
-     * 实体与表单/VO之间的转换器
-     */
     private final SealApplyConverter converter;
 
-    /**
-     * 印章申请审批记录服务
-     * 用于保存审批过程中的审批记录
-     */
     private final ISealApplyRecordService approvalRecordService;
 
-    /**
-     * Flowable工作流服务
-     * 用于启动流程、处理任务、撤销流程等Flowable相关操作
-     */
     private final IFlowableService flowableService;
 
-    /**
-     * Flowable历史服务
-     * 用于查询已完成的任务、历史流程实例等
-     */
     private final HistoryService historyService;
 
-    /**
-     * Flowable流程定义存储服务
-     * 用于查询流程定义、获取BPMN模型等
-     */
     private final RepositoryService repositoryService;
 
-    /**
-     * 系统用户服务
-     * 用于获取用户信息
-     */
     private final ISysUserService sysUserService;
 
-    /**
-     * 系统用户角色服务
-     * 用于获取用户的角色信息
-     */
     private final ISysUserRoleService sysUserRoleService;
 
-    /**
-     * 印章信息管理服务
-     * 用于获取印章相关信息
-     */
     private final ISealInfoService sealInfoService;
 
-    /**
-     * 工作流模板服务
-     * 用于根据条件匹配工作流模板
-     */
     private final com.sealflow.service.IWorkflowTemplateService workflowTemplateService;
+
+    private final IBlockchainEvidenceService blockchainEvidenceService;
 
     /**
      * 保存印章申请并启动审批流程
@@ -149,6 +117,23 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         Assert.isTrue(this.save(entity), "添加失败");
 
         startProcess(entity.getId());
+
+        ApplyEvidenceDataVO applyData = new ApplyEvidenceDataVO();
+        applyData.setApplyNo(entity.getApplyNo());
+        applyData.setApplicantId(entity.getApplicantId());
+        applyData.setApplicantName(entity.getApplicantName());
+        applyData.setSealId(entity.getSealId());
+        applyData.setSealName(entity.getSealName());
+        applyData.setApplyReason(entity.getApplyReason());
+        applyData.setApplyTime(entity.getApplyTime());
+
+        blockchainEvidenceService.createEvidence(
+                "APPLY",
+                entity.getId(),
+                applyData,
+                entity.getApplicantId(),
+                entity.getApplicantName()
+        );
 
         return entity.getId();
     }
@@ -448,55 +433,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         SealApplyVO vo = converter.entityToVo(sealApply);
         enrichSealApplyVO(vo);
 
-        String processDefinitionId = flowableService.getProcessDefinitionIdByInstanceId(processInstanceId);
-
-        if (StrUtil.isNotBlank(processDefinitionId)) {
-            BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
-            List<WorkflowNodeVO> nodes = new ArrayList<>();
-
-            List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
-                    .processInstanceId(processInstanceId)
-                    .orderByHistoricTaskInstanceEndTime().asc()
-                    .list();
-
-            List<Task> activeTasks = flowableService.getTasksByProcessInstanceId(processInstanceId);
-            Set<String> activeTaskDefKeys = activeTasks.stream()
-                    .map(Task::getTaskDefinitionKey).collect(Collectors.toSet());
-
-            Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
-            for (FlowElement element : flowElements) {
-                if (element instanceof UserTask userTask) {
-					WorkflowNodeVO nodeVO = new WorkflowNodeVO();
-                    nodeVO.setId(userTask.getId());
-                    nodeVO.setNodeName(userTask.getName());
-
-                    HistoricTaskInstance hti = historicTasks.stream()
-                            .filter(h -> h.getTaskDefinitionKey().equals(userTask.getId()) && h.getEndTime() != null)
-                            .findFirst().orElse(null);
-
-                    if (hti != null) {
-                        nodeVO.setStatus(2);
-                        nodeVO.setApproverName(
-                                getApproverName(Long.parseLong(hti.getAssignee() != null ? hti.getAssignee() : "0")));
-                        nodeVO.setFinishTime(LocalDateTime.ofInstant(hti.getEndTime().toInstant(),
-                                java.time.ZoneId.systemDefault()));
-                    } else if (activeTaskDefKeys.contains(userTask.getId())) {
-                        nodeVO.setStatus(1);
-                    } else {
-                        nodeVO.setStatus(0);
-                    }
-
-                    List<String> groups = userTask.getCandidateGroups();
-                    if (groups != null && !groups.isEmpty()) {
-                        nodeVO.setRoleName(ApproverRole.getNameByCode(groups.get(0)));
-                    }
-
-                    nodes.add(nodeVO);
-                }
-            }
-            vo.setProcessNodes(nodes);
-        }
-
         return vo;
     }
 
@@ -605,42 +541,47 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
                             .map(Task::getTaskDefinitionKey).collect(Collectors.toSet());
 
                     Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
+                    List<UserTask> allUserTasks = new ArrayList<>();
 
                     for (FlowElement element : flowElements) {
                         if (element instanceof UserTask userTask) {
-							WorkflowNodeVO nodeVO = new WorkflowNodeVO();
-                            nodeVO.setId(userTask.getId());
-                            nodeVO.setType("approve");
-                            nodeVO.setNodeName(userTask.getName());
-
-                            HistoricTaskInstance hti = historicTasks.stream()
-                                    .filter(h -> h.getTaskDefinitionKey().equals(userTask.getId()) && h.getEndTime() != null)
-                                    .findFirst().orElse(null);
-
-                            SealApplyRecordVO record = approvalRecords.stream()
-                                    .filter(r -> r.getTaskKey() != null && r.getTaskKey().equals(userTask.getId()))
-                                    .findFirst().orElse(null);
-
-                            if (record != null) {
-                                nodeVO.setStatus(2);
-                                nodeVO.setApproverName(
-                                        getApproverName(Long.parseLong(record.getApproverId() != null ? record.getApproverId().toString() : "0")));
-                                nodeVO.setFinishTime(record.getApproveTime());
-                                nodeVO.setComment(record.getApproveComment());
-                                nodeVO.setApproveResult(record.getApproveResult());
-                            } else if (activeTaskDefKeys.contains(userTask.getId())) {
-                                nodeVO.setStatus(1);
-                            } else {
-                                nodeVO.setStatus(0);
-                            }
-
-                            List<String> groups = userTask.getCandidateGroups();
-                            if (groups != null && !groups.isEmpty()) {
-                                nodeVO.setRoleName(ApproverRole.getNameByCode(groups.get(0)));
-                            }
-
-                            nodes.add(nodeVO);
+                            allUserTasks.add(userTask);
                         }
+                    }
+
+                    for (UserTask userTask : allUserTasks) {
+                        WorkflowNodeVO nodeVO = new WorkflowNodeVO();
+                        nodeVO.setId(userTask.getId());
+                        nodeVO.setType("approve");
+                        nodeVO.setNodeName(userTask.getName());
+
+                        HistoricTaskInstance hti = historicTasks.stream()
+                                .filter(h -> h.getTaskDefinitionKey().equals(userTask.getId()) && h.getEndTime() != null)
+                                .findFirst().orElse(null);
+
+                        SealApplyRecordVO record = approvalRecords.stream()
+                                .filter(r -> r.getTaskKey() != null && r.getTaskKey().equals(userTask.getId()))
+                                .findFirst().orElse(null);
+
+                        if (record != null) {
+                            nodeVO.setStatus(2);
+                            nodeVO.setApproverName(
+                                    getApproverName(Long.parseLong(record.getApproverId() != null ? record.getApproverId().toString() : "0")));
+                            nodeVO.setFinishTime(record.getApproveTime());
+                            nodeVO.setComment(record.getApproveComment());
+                            nodeVO.setApproveResult(record.getApproveResult());
+                        } else if (activeTaskDefKeys.contains(userTask.getId())) {
+                            nodeVO.setStatus(1);
+                        } else {
+                            nodeVO.setStatus(0);
+                        }
+
+                        List<String> groups = userTask.getCandidateGroups();
+                        if (groups != null && !groups.isEmpty()) {
+                            nodeVO.setRoleName(ApproverRole.getNameByCode(groups.get(0)));
+                        }
+
+                        nodes.add(nodeVO);
                     }
                 }
             }

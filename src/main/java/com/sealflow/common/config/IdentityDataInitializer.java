@@ -1,4 +1,4 @@
-package com.sealflow.config;
+package com.sealflow.common.config;
 
 import com.sealflow.service.IdentitySyncService;
 import lombok.RequiredArgsConstructor;
@@ -10,13 +10,13 @@ import org.springframework.stereotype.Component;
 
 /**
  * 身份数据初始化器
- * 
+ *
  * 功能说明：
  * 在应用启动时自动执行以下操作：
  * 1. 初始化系统角色到Flowable（班主任、辅导员、学院院长、党委书记）
  * 2. 同步所有角色到Flowable
  * 3. 同步所有用户到Flowable
- * 
+ *
  * 实现说明：
  * 实现ApplicationRunner接口，在应用启动后自动执行run方法
  * 使用@Lazy注解延迟加载IdentitySyncService，避免循环依赖
@@ -31,12 +31,12 @@ public class IdentityDataInitializer implements ApplicationRunner {
 
     /**
      * 应用启动后执行的方法
-     * 
+     *
      * 功能说明：
      * 1. 初始化系统角色
      * 2. 同步所有角色到Flowable
      * 3. 同步所有用户到Flowable
-     * 
+     *
      * @param args 应用启动参数
      */
     @Override

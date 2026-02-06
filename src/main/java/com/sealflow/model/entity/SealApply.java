@@ -95,9 +95,6 @@ public class SealApply extends BaseEntity<Long> {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime finishTime;
 
-    @Schema(description = "附件URL")
-    private String attachmentUrl;
-
     @Schema(description = "PDF文件URL")
     private String pdfUrl;
 }

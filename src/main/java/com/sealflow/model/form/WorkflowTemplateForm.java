@@ -28,4 +28,7 @@ public class WorkflowTemplateForm {
 
     @Schema(description = "允许发起的角色ID列表")
     private List<Long> allowedRoles;
+
+    @Schema(description = "印章分类（1-院章，2-党章）")
+    private Integer sealCategory;
 }

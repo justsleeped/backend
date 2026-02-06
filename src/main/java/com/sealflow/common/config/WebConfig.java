@@ -1,4 +1,4 @@
-package com.sealflow.config;
+package com.sealflow.common.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload.path:uploads/seal-images}")
+    @Value("${file.upload.path:uploads/sealflow}")
     private String uploadPath;
 
     @Override

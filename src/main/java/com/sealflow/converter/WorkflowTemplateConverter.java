@@ -25,10 +25,12 @@ public interface WorkflowTemplateConverter {
     @Mapping(target = "processDefinitionId", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "allowedRoles", ignore = true)
+    @Mapping(target = "sealCategory", ignore = true)
     WorkflowTemplate formToEntity(WorkflowTemplateForm form);
 
     @Mapping(target = "statusName", ignore = true)
     @Mapping(target = "allowedRoles", ignore = true)
+    @Mapping(target = "suspended", ignore = true)
     WorkflowTemplateVO entityToVo(WorkflowTemplate entity);
 
     List<WorkflowTemplateVO> entityToVo(List<WorkflowTemplate> entities);

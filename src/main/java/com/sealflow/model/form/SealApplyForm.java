@@ -31,9 +31,6 @@ public class SealApplyForm {
     @Schema(description = "流程模板ID")
     private Long templateId;
 
-    @Schema(description = "附件URL")
-    private String attachmentUrl;
-
     @Schema(description = "PDF文件URL")
     private String pdfUrl;
 }

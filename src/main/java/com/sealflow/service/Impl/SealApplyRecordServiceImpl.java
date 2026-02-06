@@ -10,8 +10,10 @@ import com.sealflow.converter.SealApplyConverter;
 import com.sealflow.mapper.SealApplyRecordMapper;
 import com.sealflow.model.entity.SealApplyRecord;
 import com.sealflow.model.query.SealApplyPageQuery;
+import com.sealflow.model.vo.ApprovalEvidenceDataVO;
 import com.sealflow.model.vo.SealApplyRecordVO;
 import com.sealflow.service.ISealApplyRecordService;
+import com.sealflow.service.IBlockchainEvidenceService;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.flowable.engine.TaskService;
@@ -21,7 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +36,7 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
     private SealApplyConverter converter;
     private final TaskService taskService;
     private final HistoryService historyService;
+    private final IBlockchainEvidenceService blockchainEvidenceService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -62,6 +67,23 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
         record.setTaskEndTime(taskEndTime);
 
         this.save(record);
+
+        ApprovalEvidenceDataVO approvalData = new ApprovalEvidenceDataVO();
+        approvalData.setRecordId(record.getId());
+        approvalData.setApplyId(applyId);
+        approvalData.setApproverId(approverId);
+        approvalData.setApproverName(approverName);
+        approvalData.setApproveResult(approveResult);
+        approvalData.setComment(approveComment);
+        approvalData.setApproveTime(taskEndTime);
+
+        blockchainEvidenceService.createEvidence(
+                "APPROVE",
+                record.getId(),
+                approvalData,
+                approverId,
+                approverName
+        );
     }
 
     @Override
