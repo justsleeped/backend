@@ -1,6 +1,7 @@
 package com.sealflow.common.exception;
 
 import com.sealflow.common.Result.Result;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -52,8 +53,10 @@ public class GlobalExceptionHandler {
      * 处理权限不足异常
      */
     @ExceptionHandler(AccessDeniedException.class)
-    public Result<Void> handleAccessDeniedException(AccessDeniedException e) {
-        log.warn("权限不足: {}", e.getMessage());
+    public Result<Void> handleAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+        log.warn("权限不足 - 接口: {} {}, 原因: {}", method, uri, e.getMessage());
         return Result.forbidden("权限不足，无法访问该资源");
     }
 }

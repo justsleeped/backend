@@ -4,10 +4,13 @@ package com.sealflow.common.util;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
+import cn.hutool.jwt.signers.JWTSignerUtil;
+import com.sealflow.common.properties.TokenProperties;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public final class JwtUtil {
 
-	private final JWTSigner signer; // 使用这个工具类需要自定义签名器
+	private final TokenProperties tokenProperties;
 
 	/**
 	 * 生成JWT令牌
@@ -30,10 +33,11 @@ public final class JwtUtil {
 	 * @return 生成的JWT令牌
 	 */
 	public String createToken(Map<String, Object> claims, long expiration) {
+		JWTSigner signer = createSigner();
 		return JWT.create()
 				.addPayloads(claims)
-				.setIssuedAt(new Date()) // 设置令牌签发时间
-				.setExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(expiration))) // 设置令牌过期时间
+				.setIssuedAt(new Date())
+				.setExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(expiration)))
 				.setSigner(signer)
 				.sign();
 	}
@@ -45,6 +49,7 @@ public final class JwtUtil {
 	 * @return 解析后的载荷
 	 */
     public Map<String, Object> parsePayload(String token) {
+		JWTSigner signer = createSigner();
         return JWTUtil.parseToken(token)
                 .setSigner(signer)
                 .getPayloads();
@@ -55,8 +60,8 @@ public final class JwtUtil {
 	 */
 public String getUserId(String token) {
     Map<String, Object> claims = parsePayload(token);
-    Object userIdObj = claims.get("userId"); // 获取原始对象
-    return userIdObj != null ? userIdObj.toString() : null; // 安全转换
+    Object userIdObj = claims.get("userId");
+    return userIdObj != null ? userIdObj.toString() : null;
 }
 
 	/**
@@ -65,9 +70,17 @@ public String getUserId(String token) {
     public boolean verifyToken(String token) {
 		if (StringUtils.isBlank(token)){ return false; }
         try {
+			JWTSigner signer = createSigner();
             return JWTUtil.verify(token, signer);
         } catch (Exception e) {
             return false;
         }
     }
+
+	/**
+	 * 创建新的签名器实例（线程安全）
+	 */
+	private JWTSigner createSigner() {
+		return JWTSignerUtil.hs256(tokenProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+	}
 }

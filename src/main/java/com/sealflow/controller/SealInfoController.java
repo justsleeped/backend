@@ -70,7 +70,6 @@ public class SealInfoController {
 
     @Operation(summary = "列表")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('normal:list', 'system:list')")
     public Result<List<SealInfoVO>> listSealInfo(SealInfoPageQuery queryParams) {
         return Result.success(service.listSealInfo(queryParams));
     }

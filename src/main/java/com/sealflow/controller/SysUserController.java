@@ -74,7 +74,7 @@ public class SysUserController {
 
     @Operation(summary = "分页列表")
     @PostMapping("/page")
-    @PreAuthorize("hasAuthority('system:page')")
+    @PreAuthorize("hasAnyAuthority('normal:page', 'system:page')")
     public PageResult<SysUserVO> pageSysUser(@RequestBody SysUserPageQuery queryParams) {
         IPage<SysUserVO> result = service.pageSysUser(queryParams);
         return PageResult.success(result);

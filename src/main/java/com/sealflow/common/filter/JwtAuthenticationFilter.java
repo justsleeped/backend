@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     try {
                         userId = Long.valueOf(userIdStr);
                     } catch (NumberFormatException e) {
-                        log.error("Invalid user ID format in token: {}", userIdStr);
+                        log.error("Invalid user ID format in token: {}, error: {}", userIdStr, e.getMessage());
                     }
                 }
 
