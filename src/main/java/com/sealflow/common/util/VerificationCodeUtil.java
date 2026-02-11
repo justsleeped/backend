@@ -19,11 +19,7 @@ public class VerificationCodeUtil {
      * @return 验证码
      */
     public static String generateCode() {
-        StringBuilder code = new StringBuilder(CODE_LENGTH);
-        for (int i = 0; i < CODE_LENGTH; i++) {
-            code.append(NUMBERS.charAt(random.nextInt(NUMBERS.length())));
-        }
-        return code.toString();
+		return generateCode(CODE_LENGTH);
     }
 
     /**

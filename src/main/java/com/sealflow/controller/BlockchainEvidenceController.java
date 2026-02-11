@@ -1,6 +1,5 @@
 package com.sealflow.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.sealflow.common.Result.Result;
 import com.sealflow.model.vo.BlockchainEvidenceVO;
 import com.sealflow.model.vo.BlockchainVerifyResultVO;

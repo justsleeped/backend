@@ -1,6 +1,5 @@
 package com.sealflow.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.sealflow.model.entity.BlockchainEvidence;
 import com.sealflow.model.vo.BlockchainEvidenceVO;
@@ -10,9 +9,9 @@ import java.util.List;
 
 public interface IBlockchainEvidenceService extends IService<BlockchainEvidence> {
 
-    BlockchainEvidenceVO createEvidence(String businessType, Long businessId, Object businessData, Long operatorId, String operatorName);
+    void createEvidence(String businessType, Long businessId, Object businessData, Long operatorId, String operatorName);
 
-    BlockchainEvidenceVO createEvidence(String businessType, Long businessId, String businessDataJson, Long operatorId, String operatorName);
+    void createEvidence(String businessType, Long businessId, String businessDataJson, Long operatorId, String operatorName);
 
     BlockchainEvidenceVO getEvidenceByBusiness(String businessType, Long businessId);
 

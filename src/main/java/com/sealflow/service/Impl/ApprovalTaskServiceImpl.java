@@ -1,6 +1,5 @@
 package com.sealflow.service.Impl;
 
-import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,7 +11,6 @@ import com.sealflow.model.entity.SealApply;
 import com.sealflow.model.entity.SealApplyRecord;
 import com.sealflow.model.query.ApprovalTaskPageQuery;
 import com.sealflow.model.vo.ApprovalTaskVO;
-import com.sealflow.model.vo.SealApplyVO;
 import com.sealflow.model.vo.SysRoleVO;
 import com.sealflow.model.vo.SysUserVO;
 import com.sealflow.service.IApprovalTaskService;
@@ -22,7 +20,6 @@ import com.sealflow.service.ISealApplyService;
 import com.sealflow.service.ISysUserRoleService;
 import com.sealflow.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
-import org.flowable.engine.HistoryService;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.task.api.Task;
@@ -399,9 +396,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
         if (StrUtil.isNotBlank(queryParams.getEndTime())) {
             LocalDateTime endTime = LocalDateTime.parse(queryParams.getEndTime(),
                     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            if (vo.getTaskCreateTime().isAfter(endTime)) {
-                return false;
-            }
+			return !vo.getTaskCreateTime().isAfter(endTime);
         }
         return true;
     }

@@ -1,8 +1,6 @@
 package com.sealflow.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,10 +63,10 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BlockchainEvidenceVO createEvidence(String businessType, Long businessId, Object businessData, Long operatorId, String operatorName) {
+    public void createEvidence(String businessType, Long businessId, Object businessData, Long operatorId, String operatorName) {
         try {
             String businessDataJson = objectMapper.writeValueAsString(businessData);
-            return createEvidence(businessType, businessId, businessDataJson, operatorId, operatorName);
+            createEvidence(businessType, businessId, businessDataJson, operatorId, operatorName);
         } catch (Exception e) {
             log.error("Failed to serialize business data", e);
             throw new RuntimeException("Failed to serialize business data", e);
@@ -77,7 +75,7 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BlockchainEvidenceVO createEvidence(String businessType, Long businessId, String businessDataJson, Long operatorId, String operatorName) {
+    public void createEvidence(String businessType, Long businessId, String businessDataJson, Long operatorId, String operatorName) {
         try {
             Long blockHeight = getCurrentBlockHeight() + 1;
             String dataHash = generateDataHash(businessDataJson);
@@ -111,7 +109,7 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
             log.info("Blockchain evidence created: evidenceNo={}, businessType={}, businessId={}, blockHeight={}",
                     evidence.getEvidenceNo(), businessType, businessId, blockHeight);
 
-            return converter.toVO(evidence);
+            converter.toVO(evidence);
         } catch (Exception e) {
             log.error("Failed to create blockchain evidence", e);
             throw new RuntimeException("Failed to create blockchain evidence", e);
