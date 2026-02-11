@@ -18,14 +18,6 @@ public interface IBlockchainEvidenceService extends IService<BlockchainEvidence>
 
     List<BlockchainEvidenceVO> getEvidenceListByBusiness(Long businessId);
 
-    BlockchainEvidenceVO getEvidenceByNo(String evidenceNo);
-
-    IPage<BlockchainEvidenceVO> pageEvidence(Long businessId, String businessType, Integer page, Integer size);
-
-    BlockchainVerifyResultVO verifyEvidence(Long evidenceId);
-
-    BlockchainVerifyResultVO verifyEvidenceByBusiness(String businessType, Long businessId);
-
     BlockchainVerifyResultVO verifyEvidenceWithDataConsistency(Long evidenceId);
 
     String generateDataHash(String data);

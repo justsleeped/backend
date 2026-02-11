@@ -1,7 +1,7 @@
 package com.sealflow.controller;
 
 import com.sealflow.common.Result.Result;
-import com.sealflow.common.constant.Constants;
+import com.sealflow.common.context.UserContextHolder;
 import com.sealflow.model.form.LoginForm;
 import com.sealflow.model.form.RegisterForm;
 import com.sealflow.model.vo.TokenVO;
@@ -44,16 +44,29 @@ public class AuthController {
 
     @Operation(summary = "用户登出")
     @PostMapping("/logout")
-    public Result<Boolean> logout(@RequestHeader(Constants.TOKEN_HEADER) String token) {
-        // 去掉Bearer前缀
-        if (token.startsWith(Constants.TOKEN_PREFIX)) {
-            token = token.substring(7);
+    public Result<Boolean> logout() {
+        // 从用户上下文获取当前用户ID
+        Long userId = UserContextHolder.getCurrentUserId();
+        if (userId == null) {
+            return Result.badRequest("未找到用户信息");
         }
-        Boolean result = authService.logout(token);
+
+        Boolean result = authService.logout(userId);
         if (result) {
             return Result.success();
         } else {
             return Result.serverError("登出失败");
+        }
+    }
+
+    @Operation(summary = "发送邮箱验证码")
+    @PostMapping("/send-email-code")
+    public Result<Boolean> sendEmailCode(@RequestParam String email) {
+        Boolean result = authService.sendEmailCode(email);
+        if (result) {
+            return Result.success();
+        } else {
+            return Result.serverError("验证码发送失败");
         }
     }
 }

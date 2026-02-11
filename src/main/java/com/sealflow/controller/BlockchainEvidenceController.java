@@ -38,47 +38,11 @@ public class BlockchainEvidenceController {
         return Result.success(evidenceList);
     }
 
-    @Operation(summary = "根据存证编号查询存证记录")
-    @GetMapping("/no/{evidenceNo}")
-    public Result<BlockchainEvidenceVO> getEvidenceByNo(
-            @Parameter(description = "存证编号") @PathVariable String evidenceNo) {
-        BlockchainEvidenceVO evidence = blockchainEvidenceService.getEvidenceByNo(evidenceNo);
-        return Result.success(evidence);
-    }
-
-    @Operation(summary = "分页查询存证记录")
-    @GetMapping("/page")
-    public Result<IPage<BlockchainEvidenceVO>> pageEvidence(
-            @Parameter(description = "业务ID") @RequestParam(required = false) Long businessId,
-            @Parameter(description = "业务类型") @RequestParam(required = false) String businessType,
-            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer page,
-            @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") Integer size) {
-        IPage<BlockchainEvidenceVO> result = blockchainEvidenceService.pageEvidence(businessId, businessType, page, size);
-        return Result.success(result);
-    }
-
-    @Operation(summary = "验证存证记录")
-    @PostMapping("/verify/{evidenceId}")
-    public Result<BlockchainVerifyResultVO> verifyEvidence(
-            @Parameter(description = "存证ID") @PathVariable Long evidenceId) {
-        BlockchainVerifyResultVO result = blockchainEvidenceService.verifyEvidence(evidenceId);
-        return Result.success(result);
-    }
-
     @Operation(summary = "验证存证记录（包含数据一致性检查）")
     @PostMapping("/verify/consistency/{evidenceId}")
     public Result<BlockchainVerifyResultVO> verifyEvidenceWithDataConsistency(
             @Parameter(description = "存证ID") @PathVariable Long evidenceId) {
         BlockchainVerifyResultVO result = blockchainEvidenceService.verifyEvidenceWithDataConsistency(evidenceId);
-        return Result.success(result);
-    }
-
-    @Operation(summary = "根据业务验证存证记录")
-    @PostMapping("/verify/business")
-    public Result<BlockchainVerifyResultVO> verifyEvidenceByBusiness(
-            @Parameter(description = "业务类型") @RequestParam String businessType,
-            @Parameter(description = "业务ID") @RequestParam Long businessId) {
-        BlockchainVerifyResultVO result = blockchainEvidenceService.verifyEvidenceByBusiness(businessType, businessId);
         return Result.success(result);
     }
 }

@@ -220,8 +220,8 @@ public class IdentitySyncServiceImpl implements IdentitySyncService, Application
      */
     @Override
     public void initSystemRoles() {
-        String[] systemRoles = {"CLASSGUIDE", "MENTOR", "DEAN", "PARTYSECRETARY"};
-        String[] roleNames = {"班主任", "辅导员", "学院院长", "党委书记"};
+        String[] systemRoles = {"STUDENT", "CLASSGUIDE", "MENTOR", "DEAN", "PARTYSECRETARY"};
+        String[] roleNames = {"学生", "班主任", "辅导员", "学院院长", "党委书记"};
 
         for (int i = 0; i < systemRoles.length; i++) {
             Group group = identityService.createGroupQuery()

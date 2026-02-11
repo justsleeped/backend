@@ -28,8 +28,16 @@ public interface IAuthService {
     /**
      * 用户登出
      *
-     * @param token 用户token
+     * @param userId 用户ID
      * @return 登出结果
      */
-    Boolean logout(String token);
+    Boolean logout(Long userId);
+
+    /**
+     * 发送邮箱验证码
+     *
+     * @param email 邮箱地址
+     * @return 发送结果
+     */
+    Boolean sendEmailCode(String email);
 }

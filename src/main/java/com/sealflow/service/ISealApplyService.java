@@ -95,13 +95,5 @@ public interface ISealApplyService extends IService<SealApply> {
      * @return 分页结果
      */
     IPage<SealApplyVO> pageMyStarted(SealApplyPageQuery queryParams, Long userId);
-
-    /**
-     * 获取流程详情
-     *
-     * @param processInstanceId 流程实例ID
-     * @return 印章申请视图对象
-     */
-    SealApplyVO getProcessDetail(String processInstanceId);
 }
 

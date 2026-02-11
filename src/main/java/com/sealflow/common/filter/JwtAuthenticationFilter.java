@@ -2,7 +2,9 @@ package com.sealflow.common.filter;
 
 import com.sealflow.common.context.UserInfo;
 import com.sealflow.common.context.UserContextHolder;
+import com.sealflow.common.properties.TokenProperties;
 import com.sealflow.common.util.JwtUtil;
+import com.sealflow.common.util.RedisUtil;
 import com.sealflow.service.ISysUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,6 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final ISysUserService userService;
+    private final TokenProperties tokenProperties;
+    private final RedisUtil redisUtil;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -54,6 +58,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if (userId != null) {
+                    // 验证Redis中是否存在该用户的token（单点登录验证）
+                    String redisKey = tokenProperties.getRedisTokenPrefix() + userId;
+                    Object cachedToken = redisUtil.get(redisKey);
+                    
+                    // 检查token是否匹配（防止使用旧token）
+                    if (cachedToken == null || !cachedToken.toString().equals(token)) {
+                        log.warn("Token已失效或已被新登录替换: userId={}", userId);
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
                     // 获取用户权限
                     List<String> permissions = userService.getPermissions(userId);
                     List<SimpleGrantedAuthority> authorities = permissions.stream()

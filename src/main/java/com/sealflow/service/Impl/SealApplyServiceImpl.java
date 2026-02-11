@@ -73,13 +73,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 保存印章申请并启动审批流程
-     * 保存印章申请信息后，自动根据印章类型匹配工作流模板并启动审批流程。
-     * 处理流程：
-     * 1. 将表单数据转换为实体
-     * 2. 生成申请编号、设置初始状态
-     * 3. 设置申请人信息
-     * 4. 保存申请信息
-     * 5. 调用startProcess()启动审批流程
+     * 保存申请信息并启动审批流程
      * @param formData 申请表单数据
      * @return 新创建的申请ID
      */
@@ -138,7 +132,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 更新印章申请
-     * 只有待审批的申请才能修改，审批中或已完成的申请不能修改。
+     * 仅待审批状态可修改
      * @param id 申请ID
      * @param formData 更新后的申请数据
      */
@@ -172,7 +166,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 删除印章申请
-     * 批量删除申请，标记为删除状态而非物理删除。
+     * 批量删除申请（逻辑删除）
      * @param idStr 申请ID字符串，多个用逗号分隔
      */
     @Override
@@ -229,16 +223,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 启动审批流程
-     * 根据申请信息匹配工作流模板，并将模板部署到Flowable引擎后启动流程实例。
-     * 处理流程：
-     * 1. 验证申请状态为待审批
-     * 2. 根据印章类型和申请人匹配工作流模板
-     * 3. 验证模板已部署
-     * 4. 验证用户是否有权限发起该工作流
-     * 5. 构建流程变量（包含申请人信息、申请ID等）
-     * 6. 调用IFlowableService启动流程实例
-     * 7. 更新申请的流程实例ID和状态
-     *
+     * 匹配工作流模板并启动流程实例
      * @param applyId 申请ID
      */
     @Override
@@ -291,16 +276,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 审批任务
-     *
-     * 处理待办任务，记录审批结果，并推进流程。
-     *
-     * 处理流程：
-     * 1. 验证任务存在
-     * 2. 验证申请存在
-     * 3. 保存审批记录
-     * 4. 调用IFlowableService完成任务
-     * 5. 检查流程是否结束，更新申请状态
-     *
+     * 处理待办任务并记录审批结果
      * @param taskId 任务ID
      * @param approveResult 审批结果（1-通过，0-拒绝）
      * @param approveComment 审批意见
@@ -374,9 +350,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 撤销审批流程
-     *
-     * 申请人可以撤销自己发起的、尚在审批中的申请。
-     *
+     * 撤销本人发起的审批中申请
      * @param applyId 申请ID
      * @param userId 用户ID（用于验证是否为申请人）
      */
@@ -400,7 +374,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 分页查询我发起的申请
-     *
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果
@@ -412,29 +385,8 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
     }
 
     /**
-     * 获取流程详情
-     *
-     * 获取申请对应的流程详情，包括流程节点信息和各节点的审批状态。
-     *
-     * @param processInstanceId 流程实例ID
-     * @return 包含流程节点信息的申请VO
-     */
-    @Override
-    public SealApplyVO getProcessDetail(String processInstanceId) {
-        SealApply sealApply = this.getOne(new LambdaQueryWrapper<SealApply>()
-                .eq(SealApply::getProcessInstanceId, processInstanceId));
-        Assert.notNull(sealApply, "申请不存在");
-        SealApplyVO vo = converter.entityToVo(sealApply);
-        enrichSealApplyVO(vo);
-
-        return vo;
-    }
-
-    /**
      * 更新当前任务信息
-     *
-     * 查询流程实例的当前待办任务，更新申请表的当前节点信息。
-     *
+     * 查询当前待办任务并更新节点信息
      * @param sealApply 申请实体
      */
     private void updateCurrentTaskInfo(SealApply sealApply) {
@@ -451,7 +403,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 根据ID获取申请实体
-     *
      * @param id 申请ID
      * @return 申请实体
      */
@@ -465,7 +416,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 构建查询条件
-     *
      * @param queryParams 查询参数
      * @return 查询条件包装器
      */
@@ -482,7 +432,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 补充申请VO的关联信息
-     *
      * @param vo 申请VO对象
      */
     private void enrichSealApplyVO(SealApplyVO vo) {
@@ -617,7 +566,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 根据任务Key获取审批人角色代码
-     *
      * @param taskKey 任务定义Key
      * @return 角色代码
      */
@@ -630,7 +578,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 根据任务Key获取审批阶段
-     *
      * @param taskKey 任务定义Key
      * @return 审批阶段
      */
@@ -643,7 +590,6 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
 
     /**
      * 获取审批人名称
-     *
      * @param approverId 审批人ID
      * @return 审批人名称
      */

@@ -161,6 +161,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	public List<String> getRole(Long userId) {
 		List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
+		if (roleIds == null || roleIds.isEmpty()) {
+			return List.of();
+		}
 		List<SysRoleVO> roleList = sysRoleService.listByRoleIds(roleIds);
 		return roleList.stream().map(SysRoleVO::getCode).collect(Collectors.toList());
 	}

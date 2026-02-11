@@ -37,53 +37,31 @@ import java.util.stream.Collectors;
 
 /**
  * 审批任务管理服务实现类
- * 该类专门负责审批任务相关的操作，包括：
- * - 待办任务查询
- * - 已办任务查询
- * - 审批操作（同意/拒绝）
- * - 任务详情查询
- * 职责说明：
- * - 不直接操作业务数据，通过ISealApplyService和ISealApplyRecordService完成
- * - 通过IFlowableService与Flowable引擎交互
- * - 专注于审批任务的查询和处理逻辑
  */
 @Service
 @RequiredArgsConstructor
 public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
-    /**
-     * Flowable工作流服务
-     */
+    /** Flowable工作流服务 */
     private final IFlowableService flowableService;
 
-    /**
-     * 印章申请服务
-     */
+    /** 印章申请服务 */
     private final ISealApplyService sealApplyService;
 
-    /**
-     * 印章申请审批记录服务
-     */
+    /** 印章申请审批记录服务 */
     private final ISealApplyRecordService approvalRecordService;
 
-    /**
-     * 系统用户服务
-     */
+    /** 系统用户服务 */
     private final ISysUserService sysUserService;
 
-    /**
-     * 系统用户角色服务
-     */
+    /** 系统用户角色服务 */
     private final ISysUserRoleService sysUserRoleService;
 
-	/**
-     * Flowable流程定义存储服务
-     */
+    /** Flowable流程定义存储服务 */
     private final RepositoryService repositoryService;
 
     /**
      * 分页查询待办任务
-     * 查询分配给当前用户的任务以及用户所属角色候选的任务。
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果
@@ -153,7 +131,6 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 分页查询已办任务
-     * 查询当前用户已经审批过的所有任务。
      * @param queryParams 查询参数
      * @param userId 用户ID
      * @return 分页结果
@@ -200,7 +177,6 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 获取待办任务数量
-     *
      * @param userId 用户ID
      * @return 待办任务数量
      */
@@ -238,28 +214,7 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
     }
 
     /**
-     * 获取任务详情
-     *
-     * @param taskId 任务ID
-     * @return 任务详情VO
-     */
-    @Override
-    public ApprovalTaskVO getTaskDetail(String taskId) {
-        Task task = flowableService.getTaskById(taskId);
-        Assert.notNull(task, "任务不存在");
-
-        SealApply sealApply = sealApplyService.getOne(
-                new LambdaQueryWrapper<SealApply>()
-                        .eq(SealApply::getProcessInstanceId, task.getProcessInstanceId())
-                        .eq(SealApply::getDeleted, 0));
-        Assert.notNull(sealApply, "申请不存在");
-
-        return convertToTaskVO(task, sealApply, 1, null);
-    }
-
-    /**
      * 审批任务（同意）
-     *
      * @param taskId 任务ID
      * @param approveComment 审批意见
      * @param approverId 审批人ID
@@ -272,7 +227,6 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 审批任务（拒绝）
-     *
      * @param taskId 任务ID
      * @param rejectReason 拒绝原因
      * @param approverId 审批人ID
@@ -284,67 +238,11 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
     }
 
     /**
-     * 获取任务的申请详情
-     *
-     * @param taskId 任务ID
-     * @return 申请详情VO
-     */
-    @Override
-    public SealApplyVO getApplyByTaskId(String taskId) {
-        Task task = flowableService.getTaskById(taskId);
-        Assert.notNull(task, "任务不存在");
-
-        SealApply sealApply = sealApplyService.getOne(
-                new LambdaQueryWrapper<SealApply>()
-                        .eq(SealApply::getProcessInstanceId, task.getProcessInstanceId())
-                        .eq(SealApply::getDeleted, 0));
-        Assert.notNull(sealApply, "申请不存在");
-
-        return sealApplyService.getSealApplyVo(sealApply.getId());
-    }
-
-    /**
-     * 验证用户是否有权限处理该任务
-     *
-     * @param taskId 任务ID
-     * @param userId 用户ID
-     * @return 是否有权限
-     */
-    @Override
-    public boolean hasPermission(String taskId, Long userId) {
-        Task task = flowableService.getTaskById(taskId);
-        if (task == null) {
-            return false;
-        }
-
-        if (userId.toString().equals(task.getAssignee())) {
-            return true;
-        }
-
-        List<Long> roleIds = sysUserRoleService.getRoleIdsByUserId(userId);
-        if (roleIds != null && !roleIds.isEmpty()) {
-            SysUserVO userVO = sysUserService.getSysUserVo(userId);
-            if (userVO != null && userVO.getRoles() != null && !userVO.getRoles().isEmpty()) {
-                List<String> roleCodes = userVO.getRoles().stream()
-                        .map(SysRoleVO::getCode)
-                        .collect(Collectors.toList());
-
-                List<Task> candidateTasks = flowableService.getTasksByCandidateGroups(roleCodes);
-                return candidateTasks.stream()
-                        .anyMatch(t -> t.getId().equals(taskId));
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * 将Flowable任务转换为待办任务VO
-     *
      * @param task Flowable任务对象
      * @param sealApply 印章申请实体
-     * @param taskStatus 任务状态（1-待办，2-已办）
-     * @param record 审批记录（已办任务时传入）
+     * @param taskStatus 任务状态
+     * @param record 审批记录
      * @return 任务VO
      */
     private ApprovalTaskVO convertToTaskVO(Task task, SealApply sealApply, Integer taskStatus, SealApplyRecord record) {
@@ -400,7 +298,6 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 将审批记录转换为已办任务VO
-     *
      * @param record 审批记录
      * @param sealApply 印章申请实体
      * @return 任务VO
@@ -455,7 +352,6 @@ public class ApprovalTaskServiceImpl implements IApprovalTaskService {
 
     /**
      * 匹配查询参数
-     *
      * @param vo 任务VO
      * @param queryParams 查询参数
      * @return 是否匹配

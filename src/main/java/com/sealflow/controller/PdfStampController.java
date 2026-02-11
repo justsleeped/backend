@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +36,7 @@ public class PdfStampController {
 
     @Operation(summary = "上传PDF文件")
     @PostMapping("/upload")
+    @PreAuthorize("hasAuthority('system:upload')")
     public Result<String> uploadPdf(@RequestParam("file") MultipartFile file) {
         try {
             String fileUrl = pdfStampService.uploadPdf(file);
@@ -46,6 +48,7 @@ public class PdfStampController {
 
     @Operation(summary = "盖章并下载PDF")
     @PostMapping("/download")
+    @PreAuthorize("hasAuthority('system:stamp')")
     public ResponseEntity<byte[]> downloadStampedPdf(@Valid @RequestBody SealStampForm formData) {
         try {
             byte[] pdfBytes = pdfStampService.stampPdf(formData);
