@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 验证Redis中是否存在该用户的token（单点登录验证）
                     String redisKey = tokenProperties.getRedisTokenPrefix() + userId;
                     Object cachedToken = redisUtil.get(redisKey);
-                    
+
                     // 检查token是否匹配（防止使用旧token）
                     if (cachedToken == null || !cachedToken.toString().equals(token)) {
                         log.warn("Token已失效或已被新登录替换: userId={}", userId);
@@ -87,6 +87,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 设置到用户上下文
                     UserContextHolder.setCurrentUser(userInfo);
+
+                    log.info("用户已登录: userId={}, 用户权限: permission={}", userId, permissions);
 
                     // 创建认证对象并设置到Spring Security上下文，包含用户权限
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

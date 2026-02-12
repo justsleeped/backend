@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebConfig implements WebMvcConfigurer {
 
 	@Value("${file.upload.path:uploads/sealflow}")
