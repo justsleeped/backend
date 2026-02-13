@@ -1,5 +1,6 @@
 package com.sealflow.model.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -28,5 +29,6 @@ public class ApplyEvidenceDataVO {
     private String applyReason;
 
     @Schema(description = "申请时间")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime applyTime;
 }

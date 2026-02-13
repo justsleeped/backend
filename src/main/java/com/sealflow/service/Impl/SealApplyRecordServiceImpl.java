@@ -73,7 +73,7 @@ public class SealApplyRecordServiceImpl extends ServiceImpl<SealApplyRecordMappe
         approvalData.setApproverName(approverName);
         approvalData.setApproveResult(approveResult);
         approvalData.setComment(approveComment);
-        approvalData.setApproveTime(taskEndTime);
+        approvalData.setApproveTime(taskEndTime.truncatedTo(java.time.temporal.ChronoUnit.SECONDS));
 
         blockchainEvidenceService.createEvidence(
                 "APPROVE",

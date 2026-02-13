@@ -39,7 +39,7 @@ public class SealStampRecordServiceImpl extends ServiceImpl<SealStampRecordMappe
         record.setRemark(remark);
 
         save(record);
-        log.info("Created stamp record: {}, applyId: {}, sealName: {}", record.getStampNo(), applyId, sealName);
+        log.info("创建盖章记录: {}, 申请ID: {}, 印章名称: {}", record.getStampNo(), applyId, sealName);
         return record;
     }
 

@@ -1,7 +1,11 @@
 package com.sealflow.service.Impl;
 
 import com.sealflow.model.form.SealStampForm;
+import com.sealflow.model.vo.SealApplyVO;
+import com.sealflow.service.IBlockchainEvidenceService;
 import com.sealflow.service.IPdfStampService;
+import com.sealflow.service.ISealApplyService;
+import com.sealflow.service.ISealStampRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -25,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 @Slf4j
@@ -37,6 +42,10 @@ public class PdfStampServiceImpl implements IPdfStampService {
 
     @Value("${file.upload.url-prefix:/api/uploads}")
     private String urlPrefix;
+
+    private final ISealApplyService sealApplyService;
+    private final ISealStampRecordService sealStampRecordService;
+    private final IBlockchainEvidenceService blockchainEvidenceService;
 
     @Override
     public String uploadPdf(MultipartFile file) throws IOException {
@@ -64,8 +73,7 @@ public class PdfStampServiceImpl implements IPdfStampService {
         return urlPrefix + "/" + relativePath;
     }
 
-    @Override
-    public byte[] stampPdf(SealStampForm formData) throws IOException {
+    private byte[] stampPdf(SealStampForm formData) throws IOException {
         Assert.notNull(formData.getPdfUrl(), "PDF文件URL不能为空");
         Assert.notNull(formData.getSealImageUrl(), "印章图片URL不能为空");
 
@@ -134,6 +142,47 @@ public class PdfStampServiceImpl implements IPdfStampService {
         document.close();
 
         return outputStream.toByteArray();
+    }
+
+    @Override
+    public byte[] stampPdfWithEvidence(SealStampForm formData) throws IOException {
+        byte[] pdfBytes = stampPdf(formData);
+
+        if (formData.getApplyId() != null) {
+            SealApplyVO applyVO = sealApplyService.getSealApplyVo(formData.getApplyId());
+
+            LinkedHashMap<String, Object> stampData = new LinkedHashMap<>();
+            stampData.put("applyId", formData.getApplyId());
+            stampData.put("pdfUrl", formData.getPdfUrl());
+            stampData.put("sealImageUrl", formData.getSealImageUrl());
+            stampData.put("stamps", formData.getStamps());
+
+            Long businessId = formData.getApplyId();
+            if (applyVO != null) {
+                var stampRecord = sealStampRecordService.createStampRecord(
+                        formData.getApplyId(),
+                        applyVO.getSealId(),
+                        applyVO.getSealName(),
+                        applyVO.getApplicantId(),
+                        applyVO.getApplicantName(),
+                        formData.getPdfUrl(),
+                        formData.getSealImageUrl(),
+                        1,
+                        "PDF文件盖章"
+                );
+                businessId = stampRecord.getId();
+            }
+
+            blockchainEvidenceService.createEvidence(
+                    "STAMP",
+                    businessId,
+                    stampData,
+                    applyVO != null ? applyVO.getApplicantId() : null,
+                    applyVO != null ? applyVO.getApplicantName() : null
+            );
+        }
+
+        return pdfBytes;
     }
 
     private String convertUrlToPath(String url) {

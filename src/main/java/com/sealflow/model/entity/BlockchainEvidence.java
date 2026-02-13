@@ -1,17 +1,14 @@
 package com.sealflow.model.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.sealflow.model.base.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("blockchain_evidence")
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "区块链存证表")
 public class BlockchainEvidence extends BaseEntity<Long> {
 

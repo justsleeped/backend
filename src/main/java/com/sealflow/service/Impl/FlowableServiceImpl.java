@@ -78,7 +78,7 @@ public class FlowableServiceImpl implements IFlowableService {
      */
     @Override
     public Deployment deployProcess(String processName, String processKey, String bpmnXml) {
-        log.info("Deploying process: {}", processName);
+        log.info("部署流程: {}", processName);
         return repositoryService.createDeployment()
                 .name(processName)
                 .addInputStream(processKey + ".bpmn20.xml",

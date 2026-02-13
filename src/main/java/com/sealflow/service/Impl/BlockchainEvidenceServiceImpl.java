@@ -61,6 +61,15 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * 创建区块链存证
+     *
+     * @param businessType 业务类型
+     * @param businessId   业务ID
+     * @param businessData 业务数据
+     * @param operatorId   操作人ID
+     * @param operatorName 操作人名称
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createEvidence(String businessType, Long businessId, Object businessData, Long operatorId, String operatorName) {
@@ -68,25 +77,33 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
             String businessDataJson = objectMapper.writeValueAsString(businessData);
             createEvidence(businessType, businessId, businessDataJson, operatorId, operatorName);
         } catch (Exception e) {
-            log.error("Failed to serialize business data", e);
-            throw new RuntimeException("Failed to serialize business data", e);
+            log.error("序列化业务数据失败", e);
+            throw new RuntimeException("序列化业务数据失败", e);
         }
     }
 
-    @Override
+    /**
+     * 创建区块链存证
+     *
+     * @param businessType 业务类型
+     * @param businessId   业务ID
+     * @param businessDataJson 业务数据JSON
+     * @param operatorId   操作人ID
+     * @param operatorName 操作人名称
+     */
     @Transactional(rollbackFor = Exception.class)
     public void createEvidence(String businessType, Long businessId, String businessDataJson, Long operatorId, String operatorName) {
         try {
-            Long blockHeight = getCurrentBlockHeight() + 1;
-            String dataHash = generateDataHash(businessDataJson);
-            LocalDateTime now = LocalDateTime.now();
-            String timestamp = now.format(TIMESTAMP_FORMATTER);
+            Long blockHeight = getCurrentBlockHeight() + 1; // 获取当前区块高度
+            String dataHash = generateDataHash(businessDataJson); // 生成数据Hash
+            LocalDateTime now = LocalDateTime.now(); // 获取当前时间
+            String timestamp = now.format(TIMESTAMP_FORMATTER); // 生成时间戳
 
-            BlockchainEvidence previousBlock = getPreviousBlock();
-            String previousHash = previousBlock != null ? previousBlock.getBlockHash() : "0";
+            BlockchainEvidence previousBlock = getPreviousBlock(); // 获取前一个区块
+            String previousHash = previousBlock != null ? previousBlock.getBlockHash() : "0"; // 获取前一个区块的Hash
 
-            String blockHash = generateBlockHash(blockHeight, dataHash, previousHash, timestamp);
-            String transactionHash = generateTransactionHash(blockHash, businessType, businessId);
+            String blockHash = generateBlockHash(blockHeight, dataHash, previousHash, timestamp); // 生成区块Hash
+            String transactionHash = generateTransactionHash(blockHash, businessType, businessId); // 生成交易Hash
 
             BlockchainEvidence evidence = new BlockchainEvidence();
             evidence.setEvidenceNo(generateEvidenceNo());
@@ -106,13 +123,13 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
 
             save(evidence);
 
-            log.info("Blockchain evidence created: evidenceNo={}, businessType={}, businessId={}, blockHeight={}",
+            log.info("区块链存证创建成功: 存证编号={}, 业务类型={}, 业务ID={}, 区块高度={}",
                     evidence.getEvidenceNo(), businessType, businessId, blockHeight);
 
             converter.toVO(evidence);
         } catch (Exception e) {
-            log.error("Failed to create blockchain evidence", e);
-            throw new RuntimeException("Failed to create blockchain evidence", e);
+            log.error("创建区块链存证失败", e);
+            throw new RuntimeException("创建区块链存证失败", e);
         }
     }
 
@@ -152,7 +169,7 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
                     relatedApprovalEvidence.add(evidence);
                 }
             } catch (Exception e) {
-                log.error("Failed to parse approval evidence data", e);
+                log.error("解析审批存证数据失败", e);
             }
         }
 
@@ -186,17 +203,17 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
     public BlockchainVerifyResultVO verifyEvidenceWithDataConsistency(Long evidenceId) {
         BlockchainEvidence evidence = getById(evidenceId);
         if (evidence == null) {
-            throw new RuntimeException("Evidence not found");
+            throw new RuntimeException("存证记录不存在");
         }
 
         BlockchainVerifyResultVO result = new BlockchainVerifyResultVO();
         result.setEvidenceId(evidenceId);
         result.setEvidenceNo(evidence.getEvidenceNo());
 
-        boolean isValid = verifyDataIntegrity(evidence);
+        boolean isValid = verifyDataIntegrity(evidence); // 数据完整性验证
         result.setIsValid(isValid);
 
-        boolean isDataConsistent = verifyDataConsistency(evidence);
+        boolean isDataConsistent = verifyDataConsistency(evidence); // 数据一致性验证
         result.setIsDataConsistent(isDataConsistent);
 
         if (isValid && isDataConsistent) {
@@ -219,6 +236,12 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
         return result;
     }
 
+    /**
+     * 数据一致性验证
+     *
+     * @param evidence 存证记录
+     * @return 是否一致
+     */
     private boolean verifyDataConsistency(BlockchainEvidence evidence) {
         try {
             String businessType = evidence.getBusinessType();
@@ -227,7 +250,7 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
             if ("APPLY".equals(businessType)) {
                 SealApply currentApply = getSealApplyService().getById(businessId);
                 if (currentApply == null) {
-                    log.warn("Apply not found for businessId: {}", businessId);
+                    log.warn("申请记录不存在，业务ID: {}", businessId);
                     return false;
                 }
 
@@ -246,14 +269,15 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
                     return isApplyDataConsistent(storedData, currentData, evidence.getEvidenceNo(), businessId);
 
                 } catch (Exception e) {
-                    log.error("Failed to parse stored business data", e);
+                    log.error("解析存证业务数据失败", e);
                     return false;
                 }
 
-            } else if ("APPROVAL".equals(businessType)) {
+            }
+            else if ("APPROVAL".equals(businessType)) {
                 SealApplyRecord currentRecord = getSealApplyRecordService().getById(businessId);
                 if (currentRecord == null) {
-                    log.warn("Apply record not found for businessId: {}", businessId);
+                    log.warn("审批记录不存在，业务ID: {}", businessId);
                     return false;
                 }
 
@@ -272,90 +296,98 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
                     return isApprovalDataConsistent(storedData, currentData, evidence.getEvidenceNo(), businessId);
 
                 } catch (Exception e) {
-                    log.error("Failed to parse stored business data", e);
+                    log.error("解析存证业务数据失败", e);
                     return false;
                 }
-            } else if ("STAMP".equals(businessType)) {
-                // 对于盖章类型的存证，验证盖章记录是否一致
+            }
+            else if ("STAMP".equals(businessType)) {
                 SealStampRecord stampRecord = getSealStampRecordService().getById(businessId);
                 if (stampRecord == null) {
-                    // 如果没有找到盖章记录，尝试通过申请ID查询
-                    List<SealStampRecord> stampRecords = getSealStampRecordService().getByApplyId(businessId);
-                    if (stampRecords.isEmpty()) {
-                        log.warn("Stamp record not found for businessId: {}", businessId);
-                        return false;
-                    }
-                    // 使用第一个匹配的盖章记录
-                    stampRecord = stampRecords.get(0);
+                    log.warn("盖章记录不存在，业务ID: {}", businessId);
+                    return false;
                 }
 
-                // 验证盖章存证与数据库记录的一致性
                 try {
                     String businessDataJson = evidence.getBusinessData();
 
-                    // 解析存证中的业务数据
                     JsonNode businessData = objectMapper.readTree(businessDataJson);
                     String pdfUrl = businessData.has("pdfUrl") ? businessData.get("pdfUrl").asText() : null;
                     String sealImageUrl = businessData.has("sealImageUrl") ? businessData.get("sealImageUrl").asText() : null;
+                    String applyId = businessData.has("applyId") ? businessData.get("applyId").asText() : null;
 
-                    // 验证关键字段是否匹配
                     if (pdfUrl != null && !pdfUrl.equals(stampRecord.getPdfUrl())) {
-                        log.warn("PDF URL mismatch for stamp evidence: {}", evidence.getEvidenceNo());
+                        log.warn("PDF URL不匹配，存证编号: {}, 数据库值: {}, 存证值: {}",
+                                evidence.getEvidenceNo(), stampRecord.getPdfUrl(), pdfUrl);
                         return false;
                     }
                     if (sealImageUrl != null && !sealImageUrl.equals(stampRecord.getSealImageUrl())) {
-                        log.warn("Seal image URL mismatch for stamp evidence: {}", evidence.getEvidenceNo());
+                        log.warn("印章图片URL不匹配，存证编号: {}, 数据库值: {}, 存证值: {}",
+                                evidence.getEvidenceNo(), stampRecord.getSealImageUrl(), sealImageUrl);
+                        return false;
+                    }
+                    if (applyId != null && !applyId.equals(stampRecord.getApplyId().toString())) {
+                        log.warn("申请ID不匹配，存证编号: {}, 数据库值: {}, 存证值: {}",
+                                evidence.getEvidenceNo(), stampRecord.getApplyId(), applyId);
                         return false;
                     }
 
                     return true;
                 } catch (Exception e) {
-                    log.error("Failed to verify stamp evidence data", e);
+                    log.error("验证盖章存证数据失败", e);
                     return false;
                 }
             }
 
             return true;
         } catch (Exception e) {
-            log.error("Failed to verify data consistency", e);
+            log.error("验证数据一致性失败", e);
             return false;
         }
     }
 
+    /**
+     * 验证申请存证数据一致性
+     *
+     * @param storedData   存证数据
+     * @param currentData  数据库数据
+     * @param evidenceNo   存证编号
+     * @param businessId   业务ID
+     * @return 是否一致
+     */
     private boolean isApplyDataConsistent(ApplyEvidenceDataVO storedData, ApplyEvidenceDataVO currentData, String evidenceNo, Long businessId) {
         boolean isConsistent = true;
 
         if (!Objects.equals(storedData.getApplyReason(), currentData.getApplyReason())) {
-            log.warn("ApplyReason mismatch: stored={}, current={}", storedData.getApplyReason(), currentData.getApplyReason());
+            log.warn("申请事由不匹配: 存证值={}, 数据库值={}", storedData.getApplyReason(), currentData.getApplyReason());
             isConsistent = false;
         }
         if (!isTimeEqual(storedData.getApplyTime(), currentData.getApplyTime())) {
-            log.warn("ApplyTime mismatch: stored={}, current={}", storedData.getApplyTime(), currentData.getApplyTime());
+            log.warn("申请时间不匹配: 存证值={}, 数据库值={}", storedData.getApplyTime(), currentData.getApplyTime());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApplyNo(), currentData.getApplyNo())) {
-            log.warn("ApplyNo mismatch: stored={}, current={}", storedData.getApplyNo(), currentData.getApplyNo());
+            log.warn("申请单号不匹配: 存证值={}, 数据库值={}", storedData.getApplyNo(), currentData.getApplyNo());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApplicantId(), currentData.getApplicantId())) {
-            log.warn("ApplicantId mismatch: stored={}, current={}", storedData.getApplicantId(), currentData.getApplicantId());
+            log.warn("申请人ID不匹配: 存证值={}, 数据库值={}", storedData.getApplicantId(), currentData.getApplicantId());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApplicantName(), currentData.getApplicantName())) {
-            log.warn("ApplicantName mismatch: stored={}, current={}", storedData.getApplicantName(), currentData.getApplicantName());
+            log.warn("申请人姓名不匹配: 存证值={}, 数据库值={}", storedData.getApplicantName(), currentData.getApplicantName());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getSealId(), currentData.getSealId())) {
-            log.warn("SealId mismatch: stored={}, current={}", storedData.getSealId(), currentData.getSealId());
+            log.warn("印章ID不匹配: 存证值={}, 数据库值={}", storedData.getSealId(), currentData.getSealId());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getSealName(), currentData.getSealName())) {
-            log.warn("SealName mismatch: stored={}, current={}", storedData.getSealName(), currentData.getSealName());
+            log.warn("印章名称不匹配: 存证值={}, 数据库值={}", storedData.getSealName(), currentData.getSealName());
             isConsistent = false;
         }
 
         if (!isConsistent) {
-            log.warn("Data consistency check failed for evidence: {}, businessId: {}", evidenceNo, businessId);
+            log.warn("数据一致性检查失败，存证编号: {}, 业务ID: {}", evidenceNo, businessId);
         }
         return isConsistent;
     }
@@ -364,27 +396,27 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
         boolean isConsistent = true;
 
         if (!Objects.equals(storedData.getComment(), currentData.getComment())) {
-            log.warn("Comment mismatch: stored={}, current={}", storedData.getComment(), currentData.getComment());
+            log.warn("审批意见不匹配: 存证值={}, 数据库值={}", storedData.getComment(), currentData.getComment());
             isConsistent = false;
         }
         if (!isTimeEqual(storedData.getApproveTime(), currentData.getApproveTime())) {
-            log.warn("ApproveTime mismatch: stored={}, current={}", storedData.getApproveTime(), currentData.getApproveTime());
+            log.warn("审批时间不匹配: 存证值={}, 数据库值={}", storedData.getApproveTime(), currentData.getApproveTime());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApproveResult(), currentData.getApproveResult())) {
-            log.warn("ApproveResult mismatch: stored={}, current={}", storedData.getApproveResult(), currentData.getApproveResult());
+            log.warn("审批结果不匹配: 存证值={}, 数据库值={}", storedData.getApproveResult(), currentData.getApproveResult());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApproverId(), currentData.getApproverId())) {
-            log.warn("ApproverId mismatch: stored={}, current={}", storedData.getApproverId(), currentData.getApproverId());
+            log.warn("审批人ID不匹配: 存证值={}, 数据库值={}", storedData.getApproverId(), currentData.getApproverId());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApproverName(), currentData.getApproverName())) {
-            log.warn("ApproverName mismatch: stored={}, current={}", storedData.getApproverName(), currentData.getApproverName());
+            log.warn("审批人姓名不匹配: 存证值={}, 数据库值={}", storedData.getApproverName(), currentData.getApproverName());
             isConsistent = false;
         }
         if (!Objects.equals(storedData.getApplyId(), currentData.getApplyId())) {
-            log.warn("ApplyId mismatch: stored={}, current={}", storedData.getApplyId(), currentData.getApplyId());
+            log.warn("申请ID不匹配: 存证值={}, 数据库值={}", storedData.getApplyId(), currentData.getApplyId());
             isConsistent = false;
         }
 
@@ -397,44 +429,66 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
     private boolean isTimeEqual(LocalDateTime time1, LocalDateTime time2) {
         if (time1 == null && time2 == null) return true;
         if (time1 == null || time2 == null) return false;
-        return time1.truncatedTo(ChronoUnit.SECONDS).equals(time2.truncatedTo(ChronoUnit.SECONDS));
+        return time1.truncatedTo(ChronoUnit.SECONDS).equals(time2.truncatedTo(ChronoUnit.SECONDS)) ||
+               time1.truncatedTo(ChronoUnit.MILLIS).equals(time2.truncatedTo(ChronoUnit.MILLIS));
     }
 
-    @Override
-    public String generateDataHash(String data) {
+    /**
+     * 生成数据哈希
+     * @param data 数据
+     * @return 数据哈希
+     */
+    private String generateDataHash(String data) {
         try {
             MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
             byte[] hashBytes = digest.digest(data.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hashBytes);
         } catch (NoSuchAlgorithmException e) {
-            log.error("Failed to generate data hash", e);
-            throw new RuntimeException("Failed to generate data hash", e);
+            log.error("生成数据哈希失败", e);
+            throw new RuntimeException("生成数据哈希失败", e);
         }
     }
 
-    @Override
-    public String generateBlockHash(Long blockHeight, String dataHash, String previousHash, String timestamp) {
+    private String generateBlockHash(Long blockHeight, String dataHash, String previousHash, String timestamp) {
         String blockData = blockHeight + "|" + dataHash + "|" + previousHash + "|" + timestamp;
         return generateDataHash(blockData);
     }
 
-    @Override
-    public Long getCurrentBlockHeight() {
+    /**
+     * 获取当前块的高度
+     * @return 当前块的高度
+     */
+    private Long getCurrentBlockHeight() {
         LambdaQueryWrapper<BlockchainEvidence> wrapper = new LambdaQueryWrapper<>();
         wrapper.orderByDesc(BlockchainEvidence::getBlockHeight).last("LIMIT 1");
         BlockchainEvidence latestBlock = getOne(wrapper);
         return latestBlock != null ? latestBlock.getBlockHeight() : 0L;
     }
 
+    /**
+     * 生成交易哈希
+     * @param blockHash 区块哈希
+     * @param businessType 业务类型
+     * @param businessId 业务ID
+     * @return 交易哈希
+     */
     private String generateTransactionHash(String blockHash, String businessType, Long businessId) {
         String transactionData = blockHash + "|" + businessType + "|" + businessId + "|" + System.currentTimeMillis();
         return generateDataHash(transactionData);
     }
 
+    /**
+     * 生成存证编号
+     * @return 存证编号
+     */
     private String generateEvidenceNo() {
         return "EV" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
+    /**
+     * 获取前一个块
+     * @return 前一个块
+     */
     private BlockchainEvidence getPreviousBlock() {
         LambdaQueryWrapper<BlockchainEvidence> wrapper = new LambdaQueryWrapper<>();
         wrapper.orderByDesc(BlockchainEvidence::getBlockHeight).last("LIMIT 1");
@@ -444,17 +498,13 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
     private boolean verifyDataIntegrity(BlockchainEvidence evidence) {
         try {
             String currentDataHash = generateDataHash(evidence.getBusinessData());
-            log.info("Verifying evidence: {}, storedHash: {}, calculatedHash: {}",
+            log.info("验证存证: 存证编号={}, 存储哈希={}, 计算哈希={}",
                     evidence.getEvidenceNo(), evidence.getDataHash(), currentDataHash);
 
             if (!currentDataHash.equals(evidence.getDataHash())) {
-                log.warn("Data hash mismatch for evidence: {}", evidence.getEvidenceNo());
+                log.warn("数据哈希不匹配，存证编号: {}", evidence.getEvidenceNo());
                 return false;
             }
-
-            // 跳过区块哈希验证，因为数据哈希已经验证通过
-            // 区块哈希验证失败可能是由于时间戳精度或其他因素导致
-            // 数据哈希验证是最核心的，能确保数据未被篡改
 
             if (evidence.getBlockHeight() > 1) {
                 BlockchainEvidence previousBlock = lambdaQuery()
@@ -462,18 +512,23 @@ public class BlockchainEvidenceServiceImpl extends ServiceImpl<BlockchainEvidenc
                         .one();
 
                 if (previousBlock != null && !previousBlock.getBlockHash().equals(evidence.getPreviousHash())) {
-                    log.warn("Previous hash mismatch for evidence: {}", evidence.getEvidenceNo());
+                    log.warn("前一个区块哈希不匹配，存证编号: {}", evidence.getEvidenceNo());
                     return false;
                 }
             }
 
             return true;
         } catch (Exception e) {
-            log.error("Failed to verify data integrity", e);
+            log.error("验证数据完整性失败", e);
             return false;
         }
     }
 
+    /**
+     * 将字节数组转换为16进制字符串
+     * @param bytes 字节数组
+     * @return 16进制字符串
+     */
     private String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : bytes) {

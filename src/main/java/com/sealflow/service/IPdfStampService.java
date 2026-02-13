@@ -9,5 +9,5 @@ public interface IPdfStampService {
 
     String uploadPdf(MultipartFile file) throws IOException;
 
-    byte[] stampPdf(SealStampForm formData) throws IOException;
+    byte[] stampPdfWithEvidence(SealStampForm formData) throws IOException;
 }

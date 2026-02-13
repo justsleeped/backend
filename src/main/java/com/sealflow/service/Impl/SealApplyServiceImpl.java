@@ -117,7 +117,7 @@ public class SealApplyServiceImpl extends ServiceImpl<SealApplyMapper, SealApply
         applyData.setSealId(entity.getSealId());
         applyData.setSealName(entity.getSealName());
         applyData.setApplyReason(entity.getApplyReason());
-        applyData.setApplyTime(entity.getApplyTime());
+        applyData.setApplyTime(entity.getApplyTime().truncatedTo(java.time.temporal.ChronoUnit.SECONDS));
 
         blockchainEvidenceService.createEvidence(
                 "APPLY",
