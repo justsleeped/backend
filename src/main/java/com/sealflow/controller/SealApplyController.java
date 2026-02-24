@@ -93,7 +93,6 @@ public class SealApplyController {
      */
     @Operation(summary = "分页列表")
     @PostMapping("/page")
-    @PreAuthorize("hasAnyAuthority('normal:page', 'system:page')")
     public PageResult<SealApplyVO> pageSealApply(@RequestBody SealApplyPageQuery queryParams) {
         IPage<SealApplyVO> result = service.pageSealApply(queryParams);
         return PageResult.success(result);
