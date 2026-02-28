@@ -1,5 +1,6 @@
 package com.sealflow.service.Impl;
 
+import com.sealflow.common.handler.LockWebSocketHandler;
 import com.sealflow.service.IHardwareControlService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,10 @@ public class HardwareControlServiceImpl implements IHardwareControlService {
             log.info("申请ID: {}", applyId);
             log.info("操作时间: {}", LocalDateTime.now());
             log.info("================================");
+
+            LockWebSocketHandler.sendToDevice("open");
+            log.info("发送物理章开锁信号成功，sealId={}, sealName={}, applyId={}",
+                     sealId, sealName, applyId);
 
             return true;
         } catch (Exception e) {
