@@ -46,7 +46,7 @@ spring:
 file:
     upload:
         path: uploads/sealflow
-        url-prefix: /api/uploads
+        url-prefix: http://localhost:9090/api/uploads
 
 # Flowable工作流引擎配置
 flowable:
