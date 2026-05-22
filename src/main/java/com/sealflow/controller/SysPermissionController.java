@@ -27,7 +27,7 @@ public class SysPermissionController {
 
     @Operation(summary = "新增")
     @PostMapping(value = "/add")
-    @PreAuthorize("hasAuthority('system:add')")
+    // @PreAuthorize("hasAuthority('system:add')")
     public Result<Long> saveSysPermission(@Valid @RequestBody SysPermissionForm formData) {
         Long id = service.saveSysPermission(formData);
         return Result.success(id);
@@ -35,7 +35,7 @@ public class SysPermissionController {
 
     @Operation(summary = "修改")
     @PutMapping(value = "/{id}/update")
-    @PreAuthorize("hasAuthority('system:update')")
+    // @PreAuthorize("hasAuthority('system:update')")
     public Result<Boolean> updateSysPermission(
             @Parameter(description = "主键ID") @PathVariable Long id,
             @Valid @RequestBody SysPermissionForm formData) {
@@ -45,7 +45,7 @@ public class SysPermissionController {
 
     @Operation(summary = "删除")
     @DeleteMapping(value = "/{ids}/delete")
-    @PreAuthorize("hasAuthority('system:delete')")
+    // @PreAuthorize("hasAuthority('system:delete')")
     public Result<Boolean> deleteSysPermission(@Parameter(description = "需要删除的IDs，多个以英文逗号(,)分割") @PathVariable String ids) {
         service.deleteSysPermission(ids);
         return Result.success();
@@ -53,7 +53,7 @@ public class SysPermissionController {
 
     @Operation(summary = "详情(根据ID获取)")
     @GetMapping("/{id}/form")
-    @PreAuthorize("hasAuthority('system:get')")
+    // @PreAuthorize("hasAuthority('system:get')")
     public Result<SysPermissionVO> getSysPermissionForm(@Parameter(description = "主键ID") @PathVariable Long id) {
         SysPermissionVO sysPermissionVO = service.getSysPermissionVo(id);
         return Result.success(sysPermissionVO);
@@ -61,14 +61,14 @@ public class SysPermissionController {
 
     @Operation(summary = "列表")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('system:list', 'normal:list')")
+    // @PreAuthorize("hasAnyAuthority('system:list', 'normal:list')")
     public Result<List<SysPermissionVO>> listSysPermission() {
         return Result.success(service.listSysPermission());
     }
 
     @Operation(summary = "分页列表")
     @PostMapping("/page")
-    @PreAuthorize("hasAnyAuthority('system:page')")
+    // @PreAuthorize("hasAnyAuthority('system:page')")
     public PageResult<SysPermissionVO> pageSysPermission(@RequestBody SysPermissionPageQuery queryParams) {
         IPage<SysPermissionVO> result = service.pageSysPermission(queryParams);
         return PageResult.success(result);

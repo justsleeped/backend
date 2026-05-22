@@ -27,7 +27,7 @@ public class PdfStampController {
 
     @Operation(summary = "上传PDF文件")
     @PostMapping("/upload")
-    @PreAuthorize("hasAuthority('system:upload')")
+    // @PreAuthorize("hasAuthority('system:upload')")
     public Result<String> uploadPdf(@RequestParam("file") MultipartFile file) {
         try {
             String fileUrl = pdfStampService.uploadPdf(file);
@@ -39,7 +39,7 @@ public class PdfStampController {
 
     @Operation(summary = "盖章并下载PDF")
     @PostMapping("/download")
-    @PreAuthorize("hasAuthority('system:stamp')")
+    // @PreAuthorize("hasAuthority('system:stamp')")
     public ResponseEntity<byte[]> downloadStampedPdf(@Valid @RequestBody SealStampForm formData) {
         try {
             byte[] pdfBytes = pdfStampService.stampPdfWithEvidence(formData);

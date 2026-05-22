@@ -36,7 +36,7 @@ public class SealApplyController {
      */
     @Operation(summary = "新增印章使用申请")
     @PostMapping(value = "/add")
-    @PreAuthorize("hasAnyAuthority('normal:add', 'system:add')")
+    // @PreAuthorize("hasAnyAuthority('normal:add', 'system:add')")
     public Result<Long> saveSealApply(@Valid @RequestBody SealApplyForm formData) {
         Long id = service.saveSealApply(formData);
         return Result.success(id);
@@ -51,7 +51,7 @@ public class SealApplyController {
      */
     @Operation(summary = "修改印章使用申请")
     @PutMapping(value = "/{id}/update")
-    @PreAuthorize("hasAnyAuthority('normal:update', 'system:update')")
+    // @PreAuthorize("hasAnyAuthority('normal:update', 'system:update')")
     public Result<Boolean> updateSealApply(
             @Parameter(description = "主键ID") @PathVariable Long id,
             @Valid @RequestBody SealApplyForm formData) {
@@ -67,7 +67,7 @@ public class SealApplyController {
      */
     @Operation(summary = "删除印章使用申请")
     @DeleteMapping(value = "/{ids}/delete")
-    @PreAuthorize("hasAnyAuthority('normal:delete', 'system:delete')")
+    // @PreAuthorize("hasAnyAuthority('normal:delete', 'system:delete')")
     public Result<Boolean> deleteSealApply(@Parameter(description = "需要删除的IDs，多个以英文逗号(,)分割") @PathVariable String ids) {
         service.deleteSealApply(ids);
         return Result.success();
@@ -80,7 +80,7 @@ public class SealApplyController {
      */
     @Operation(summary = "详情(根据ID获取)")
     @GetMapping("/{id}/form")
-    @PreAuthorize("hasAnyAuthority('normal:get', 'system:get')")
+    // @PreAuthorize("hasAnyAuthority('normal:get', 'system:get')")
     public Result<SealApplyVO> getSealApplyForm(@Parameter(description = "主键ID") @PathVariable Long id) {
         SealApplyVO sealApplyVO = service.getSealApplyVo(id);
         return Result.success(sealApplyVO);
@@ -106,7 +106,7 @@ public class SealApplyController {
      */
     @Operation(summary = "撤销流程")
     @PostMapping("/{id}/revoke")
-    @PreAuthorize("hasAuthority('normal:update')")
+    // @PreAuthorize("hasAuthority('normal:update')")
     public Result<Boolean> revokeProcess(@Parameter(description = "申请单ID") @PathVariable Long id) {
         Long currentUserId = UserContextHolder.getCurrentUserId();
         service.revokeProcess(id, currentUserId);
@@ -121,7 +121,7 @@ public class SealApplyController {
      */
     @Operation(summary = "我发起的申请")
     @PostMapping("/myStarted")
-    @PreAuthorize("hasAnyAuthority('normal:page', 'system:page')")
+    // @PreAuthorize("hasAnyAuthority('normal:page', 'system:page')")
     public PageResult<SealApplyVO> pageMyStarted(@RequestBody SealApplyPageQuery queryParams) {
         Long currentUserId = UserContextHolder.getCurrentUserId();
         IPage<SealApplyVO> result = service.pageMyStarted(queryParams, currentUserId);

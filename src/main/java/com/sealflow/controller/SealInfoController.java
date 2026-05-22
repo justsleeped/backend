@@ -28,7 +28,7 @@ public class SealInfoController {
 
     @Operation(summary = "上传印章图片")
     @PostMapping("/upload")
-    @PreAuthorize("hasAuthority('system:upload')")
+    // @PreAuthorize("hasAuthority('system:upload')")
     public Result<String> uploadSealImage(@RequestParam("file") MultipartFile file) {
         String fileUrl = service.uploadSealImage(file);
         return Result.success(fileUrl);
@@ -36,7 +36,7 @@ public class SealInfoController {
 
     @Operation(summary = "新增")
     @PostMapping(value = "/add")
-    @PreAuthorize("hasAuthority('system:add')")
+    // @PreAuthorize("hasAuthority('system:add')")
     public Result<Long> saveSealInfo(@Valid @RequestBody SealInfoForm formData) {
         Long id = service.saveSealInfo(formData);
         return Result.success(id);
@@ -44,7 +44,7 @@ public class SealInfoController {
 
     @Operation(summary = "修改")
     @PutMapping(value = "/{id}/update")
-    @PreAuthorize("hasAuthority('system:update')")
+    // @PreAuthorize("hasAuthority('system:update')")
     public Result<Boolean> updateSealInfo(
             @Parameter(description = "主键ID") @PathVariable Long id,
             @Valid @RequestBody SealInfoForm formData) {
@@ -54,7 +54,7 @@ public class SealInfoController {
 
     @Operation(summary = "删除")
     @DeleteMapping(value = "/{ids}/delete")
-    @PreAuthorize("hasAuthority('system:delete')")
+    // @PreAuthorize("hasAuthority('system:delete')")
     public Result<Boolean> deleteSealInfo(@Parameter(description = "需要删除的IDs，多个以英文逗号(,)分割") @PathVariable String ids) {
         service.deleteSealInfo(ids);
         return Result.success();
@@ -62,7 +62,7 @@ public class SealInfoController {
 
     @Operation(summary = "详情(根据ID获取)")
     @GetMapping("/{id}/form")
-    @PreAuthorize("hasAnyAuthority('normal:get', 'system:get')")
+    // @PreAuthorize("hasAnyAuthority('normal:get', 'system:get')")
     public Result<SealInfoVO> getSealInfoForm(@Parameter(description = "主键ID") @PathVariable Long id) {
         SealInfoVO sealInfoVO = service.getSealInfoVo(id);
         return Result.success(sealInfoVO);
@@ -76,7 +76,7 @@ public class SealInfoController {
 
     @Operation(summary = "分页列表")
     @PostMapping("/page")
-    @PreAuthorize("hasAnyAuthority('normal:page', 'system:page')")
+    // @PreAuthorize("hasAnyAuthority('normal:page', 'system:page')")
     public PageResult<SealInfoVO> pageSealInfo(@RequestBody SealInfoPageQuery queryParams) {
         IPage<SealInfoVO> result = service.pageSealInfo(queryParams);
         return PageResult.success(result);
